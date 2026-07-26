@@ -10,7 +10,7 @@ from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
-from database import get_db
+from ..database import get_db
 from models import LearningProfile, User
 from services.llm_api import LLMService
 
