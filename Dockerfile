@@ -10,10 +10,10 @@ ENV PYTHONUNBUFFERED=1
 COPY backend/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# 复制后端代码
-COPY backend/ .
+# 【修正】后端复制到 /app/backend，和本地目录结构保持一致
+COPY backend/ /app/backend/
 
-# ★ 修复：复制前端到正确路径（main.py 查找 /app/frontend/）
+# 复制前端到 /app/frontend
 COPY frontend/ /app/frontend/
 
 # 创建数据目录
@@ -22,5 +22,5 @@ RUN mkdir -p /app/backend/data
 # 暴露端口
 EXPOSE 8000
 
-# ★ 修复：使用 $PORT 环境变量（Railway/Render 自动设置此变量）
-CMD uvicorn main:app --host 0.0.0.0 --port ${PORT:-8000}
+# 启动入口修改：main文件位于 backend 文件夹内
+CMD uvicorn backend.main:app --host 0.0.0.0 --port ${PORT:-8000}
