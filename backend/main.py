@@ -13,11 +13,23 @@ AI辅助业务分析个性化培训系统 — 后端入口
 import os
 import sys
 from pathlib import Path
+
+# =====================【新增路径适配代码，必须放在所有import最前面】=====================
+# 获取当前main.py文件绝对路径
+CURRENT_FILE = Path(__file__).resolve()
+# 项目根目录：main.py 的上一级目录（容器内 /app，本地项目根目录）
+PROJECT_ROOT = CURRENT_FILE.parent.parent
+# 将根目录加入Python搜索路径
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+# ======================================================================================
+
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 
+# 现在可以正常识别根目录 config.py
 from config import settings
 from database import init_db
 from routers.api import api_router
