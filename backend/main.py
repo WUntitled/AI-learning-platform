@@ -30,8 +30,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 
 # 现在可以正常识别根目录 config.py
-from config import settings
-from database import init_db
+from .config import settings
+from .database import init_db
 from routers.api import api_router
 from routers.profile import router as profile_router
 from routers.course import router as course_router
