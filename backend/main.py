@@ -12,17 +12,11 @@ AI辅助业务分析个性化培训系统 — 后端入口
 """
 import os
 import sys
-
-# 设置控制台编码为UTF-8 (解决Windows GBK编码问题)
-if sys.platform == "win32":
-    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
-    os.environ["PYTHONIOENCODING"] = "utf-8"
-
-import uvicorn
 from pathlib import Path
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
 
 from config import settings
 from database import init_db
@@ -32,6 +26,12 @@ from routers.course import router as course_router
 from routers.learning import router as learning_router
 from routers.practice import router as practice_router
 from routers.exam import router as exam_router
+
+
+# 设置控制台编码为UTF-8 (解决Windows GBK编码问题)
+if sys.platform == "win32":
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    os.environ["PYTHONIOENCODING"] = "utf-8"
 
 
 @asynccontextmanager
@@ -83,39 +83,50 @@ app.include_router(exam_router)
 
 # ================================================================
 # 静态文件服务（前端SPA）
+# 每次请求动态计算前端目录，不再启动一次性缓存判断
 # ================================================================
-# 使用 catch-all 路由提供前端文件，如果前端不存在则返回 API 信息
-static_dir = Path(__file__).parent.parent / "frontend"
-has_frontend = static_dir.exists() and (static_dir / "index.html").exists()
+def get_frontend_dir() -> Path:
+    """获取前端目录路径"""
+    return Path(__file__).parent.parent / "frontend"
 
 
 @app.get("/")
 async def root():
-    if has_frontend:
-        from fastapi.responses import FileResponse
-        index_path = static_dir / "index.html"
-        if index_path.exists():
-            return FileResponse(str(index_path))
-    return {"message": "AI辅助业务分析个性化培训系统 API", "version": "1.0.0",
-            "docs": "/api/docs", "status": "/api/v1/system/status"}
+    static_dir = get_frontend_dir()
+    index_path = static_dir / "index.html"
+    if index_path.exists():
+        return FileResponse(str(index_path))
+    # 不存在前端文件，返回API提示JSON
+    return {
+        "message": "AI辅助业务分析个性化培训系统 API",
+        "version": "1.0.0",
+        "docs": "/api/docs",
+        "status": "/api/v1/system/status"
+    }
 
 
 @app.get("/{full_path:path}")
 async def serve_frontend(full_path: str):
-    """SPA catch-all — 提供前端静态文件"""
-    if has_frontend:
-        from fastapi.responses import FileResponse
-        file_path = static_dir / full_path
-        if file_path.exists() and file_path.is_file():
-            return FileResponse(str(file_path))
-        index_path = static_dir / "index.html"
-        if index_path.exists():
-            return FileResponse(str(index_path))
+    """SPA catch-all — 提供前端静态文件，支持前端路由刷新"""
+    static_dir = get_frontend_dir()
+    index_path = static_dir / "index.html"
+    file_path = static_dir / full_path
+
+    # 如果请求的文件存在，直接返回文件
+    if file_path.exists() and file_path.is_file():
+        return FileResponse(str(file_path))
+
+    # 文件不存在，返回index.html（前端SPA路由）
+    if index_path.exists():
+        return FileResponse(str(index_path))
+
     return {"message": "Not found", "docs": "/api/docs"}
 
 
-if has_frontend:
-    print(f"[OK] 前端已加载: {static_dir}")
+# 启动时打印前端目录状态
+frontend_path = get_frontend_dir()
+if frontend_path.exists() and (frontend_path / "index.html").exists():
+    print(f"[OK] 前端已加载: {frontend_path}")
 else:
     print(f"[INFO] 前端 index.html 不存在，仅API模式运行")
 
