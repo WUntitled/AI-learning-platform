@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI辅助业务分析个性化培训系统</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<!-- ===== HEADER ===== -->
+<header class="app-header">
+  <div class="logo" onclick="navigateTo('dashboard')" style="cursor:pointer">
+    <div class="icon">AI</div>
+    <div>
+      <h1>AI培训系统 <span>·</span> 多智能体协同平台</h1>
+      <div class="subtitle">Multi-Agent Collaborative Training Platform</div>
+    </div>
+  </div>
+  <div class="header-right">
+    <span class="status-dot"></span>
+    <span id="sysStatus">系统就绪</span>
+    <span style="opacity:.3">|</span>
+    <span id="llmBadge" class="llm-badge">模拟模式</span>
+  </div>
+</header>
+
+<!-- ===== NAV ===== -->
+<nav class="app-nav" id="appNav">
+  <button class="nav-item active" data-page="dashboard" onclick="navigateTo('dashboard')">
+    <span class="nav-icon">🏠</span><span class="nav-label">主面板</span>
+  </button>
+  <button class="nav-item" data-page="course" onclick="navigateTo('course')">
+    <span class="nav-icon">📚</span><span class="nav-label">AI做课</span>
+  </button>
+  <button class="nav-item" data-page="learning" onclick="navigateTo('learning')">
+    <span class="nav-icon">💬</span><span class="nav-label">AI学习</span>
+  </button>
+  <button class="nav-item" data-page="practice" onclick="navigateTo('practice')">
+    <span class="nav-icon">⚡</span><span class="nav-label">AI陪练</span>
+  </button>
+  <button class="nav-item" data-page="exam" onclick="navigateTo('exam')">
+    <span class="nav-icon">📝</span><span class="nav-label">AI考试</span>
+  </button>
+  <button class="nav-item" data-page="report" onclick="navigateTo('report')">
+    <span class="nav-icon">📊</span><span class="nav-label">学情报告</span>
+  </button>
+</nav>
+
+<!-- ===== MAIN CONTENT ===== -->
+<main class="app-main" id="appMain">
+  <!-- Each page is rendered here by app.js -->
+</main>
+
+<!-- ===== DRAWER (shared) ===== -->
+<div class="drawer-overlay" id="drawerOverlay" onclick="closeDrawer(event)">
+  <div class="drawer-panel" onclick="event.stopPropagation()">
+    <button class="drawer-close" onclick="closeDrawer()">✕</button>
+    <div class="drawer-scroll">
+      <div class="drawer-header">
+        <div class="dh-icon-wrap"><span id="drIcon">🤖</span><span class="dh-number" id="drNumber">01</span></div>
+        <div class="dh-info">
+          <div class="dh-cn" id="drCn">Agent名称</div>
+          <div class="dh-en" id="drEn">Agent Name</div>
+          <div class="dh-status" id="drStatus"><span style="color:rgba(255,255,255,.35)">●</span> 就绪</div>
+        </div>
+      </div>
+      <div class="drawer-body" id="drawerBody"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== SCRIPTS ===== -->
+<script src="https://cdn.jsdelivr.net/npm/marked@12/marked.min.js"></script>
+<script src="js/api.js"></script>
+<script src="js/components.js"></script>
+<script src="js/charts/radar.js"></script>
+<script src="js/pages/dashboard.js"></script>
+<script src="js/pages/course.js"></script>
+<script src="js/pages/learning.js"></script>
+<script src="js/pages/practice.js"></script>
+<script src="js/pages/exam.js"></script>
+<script src="js/pages/report.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

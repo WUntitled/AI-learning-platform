@@ -1,0 +1,17 @@
+version: '3.8'
+
+services:
+  training-system:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    container_name: ai-training-system
+    ports:
+      - "8000:8000"
+    environment:
+      - LLM_PROVIDER=simulation
+      - HOST=0.0.0.0
+      - PORT=8000
+    volumes:
+      - ./data:/app/data
+    restart: unless-stopped

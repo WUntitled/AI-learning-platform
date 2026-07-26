@@ -1,0 +1,13 @@
+# Render Blueprint 配置 — 用于 AI 培训系统 Docker 部署
+# 使用方法: 在 Render Dashboard → Blueprint → 连接此仓库
+services:
+  - type: web
+    name: ai-training-system
+    env: docker
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /api/v1/system/status
+    envVars:
+      - key: LLM_PROVIDER
+        value: simulation
+      - key: HOST
+        value: 0.0.0.0
