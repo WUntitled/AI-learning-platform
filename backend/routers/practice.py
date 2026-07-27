@@ -11,7 +11,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from typing import Optional
 from sqlalchemy.orm import Session
-from ..database import get_db
+from database import get_db
 from models import PracticeSession, LearningProfile
 from services.llm_api import LLMService
 

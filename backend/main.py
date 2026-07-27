@@ -30,14 +30,14 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 
 # 现在可以正常识别根目录 config.py
-from .config import settings
-from .database import init_db
-from .routers.api import api_router
-from .routers.profile import router as profile_router
-from .routers.course import router as course_router
-from .routers.learning import router as learning_router
-from .routers.practice import router as practice_router
-from .routers.exam import router as exam_router
+from config import settings
+from database import init_db
+from routers.api import api_router
+from routers.profile import router as profile_router
+from routers.course import router as course_router
+from routers.learning import router as learning_router
+from routers.practice import router as practice_router
+from routers.exam import router as exam_router
 
 
 # 设置控制台编码为UTF-8 (解决Windows GBK编码问题)
