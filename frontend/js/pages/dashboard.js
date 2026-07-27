@@ -5,11 +5,17 @@ function renderDashboard() {
   const main = document.getElementById('appMain');
   main.innerHTML = `
     <div class="page active" id="pageDashboard">
-      <div style="padding:14px 20px 6px;flex-shrink:0">
-        <div style="font-size:16px;font-weight:600;color:#e8edf5">🏠 系统主面板</div>
-        <div style="font-size:10px;color:rgba(255,255,255,.3);margin-top:3px">多智能体协同 AI 辅助业务分析培训平台</div>
+      <div style="padding:12px 20px 4px;flex-shrink:0;display:flex;align-items:center;justify-content:space-between">
+        <div>
+          <div style="font-size:16px;font-weight:600;color:#e8edf5">🏠 系统主面板</div>
+          <div style="font-size:10px;color:rgba(255,255,255,.3);margin-top:2px">多智能体协同 AI 辅助业务分析培训平台</div>
+        </div>
+        <div id="dashQuickStats" style="display:flex;gap:12px;font-size:10px;color:rgba(255,255,255,.3)">
+          <span id="dashQuickScore">—</span>
+          <span id="dashQuickStage">—</span>
+        </div>
       </div>
-      <div style="flex:1;overflow-y:auto">
+      <div style="flex:1;overflow-y:auto;padding:0 16px 16px">
         <div class="dashboard-grid">
           <div class="dashboard-card" onclick="navigateTo('course')">
             <div class="dc-badge">多Agent协同</div>
@@ -44,24 +50,29 @@ function renderDashboard() {
           </div>
 
           <div class="dashboard-card full" id="dashProfileSection" onclick="navigateTo('report')">
-            <div class="dc-title">📊 学情概览</div>
-            <div style="display:grid;grid-template-columns:1.2fr 1fr 1.2fr;gap:16px;margin-top:12px" id="dashProfileContent">
-              <div style="display:flex;flex-direction:column;gap:4px">
-                <div style="font-size:10px;color:rgba(255,255,255,.3)">当前学习者</div>
-                <div id="dashName" style="font-size:14px;font-weight:600">—</div>
-                <div id="dashRole" style="font-size:10px;color:rgba(255,255,255,.35)">—</div>
-              </div>
-              <div style="display:flex;flex-direction:column;gap:4px">
-                <div style="font-size:10px;color:rgba(255,255,255,.3)">能力评分</div>
-                <div id="dashScore" style="font-size:14px;font-weight:600">—</div>
-                <div id="dashStage" style="font-size:10px;color:rgba(255,255,255,.35)">—</div>
-              </div>
-              <div style="display:flex;flex-direction:column;gap:4px">
-                <div style="font-size:10px;color:rgba(255,255,255,.3)">学习轨迹</div>
-                <div id="dashTrajectory" style="font-size:10px;color:rgba(255,255,255,.35)">
-                  <span id="dashTrajCount">0</span> 条学习记录
+            <div class="dc-title" style="display:flex;align-items:center;justify-content:space-between">
+              <span>📊 学情概览</span>
+              <span style="font-size:9px;color:rgba(255,255,255,.25);font-weight:400">点击查看完整学情报告 →</span>
+            </div>
+            <div id="dashProfileContent">
+              <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-top:10px">
+                <div style="background:rgba(255,255,255,.015);border-radius:8px;padding:10px">
+                  <div style="font-size:9px;color:rgba(255,255,255,.3);margin-bottom:4px">当前学习者</div>
+                  <div id="dashName" style="font-size:15px;font-weight:600">—</div>
+                  <div id="dashRole" style="font-size:9px;color:rgba(255,255,255,.35);margin-top:2px">—</div>
                 </div>
-                <div id="dashExamScore" style="font-size:10px;color:rgba(255,255,255,.35)">—</div>
+                <div style="background:rgba(255,255,255,.015);border-radius:8px;padding:10px">
+                  <div style="font-size:9px;color:rgba(255,255,255,.3);margin-bottom:4px">综合能力评分</div>
+                  <div id="dashScore" style="font-size:20px;font-weight:700;color:#4fc3f7">—</div>
+                  <div id="dashStage" style="font-size:9px;color:rgba(255,255,255,.35);margin-top:2px">—</div>
+                </div>
+                <div style="background:rgba(255,255,255,.015);border-radius:8px;padding:10px">
+                  <div style="font-size:9px;color:rgba(255,255,255,.3);margin-bottom:4px">学习记录</div>
+                  <div id="dashTrajectory" style="font-size:9px;color:rgba(255,255,255,.35)">
+                    <span id="dashTrajCount" style="font-size:20px;font-weight:700;color:rgba(255,255,255,.7)">0</span> 条
+                  </div>
+                  <div id="dashExamScore" style="font-size:9px;color:rgba(255,255,255,.35);margin-top:2px">—</div>
+                </div>
               </div>
             </div>
           </div>

@@ -20,6 +20,15 @@ const LEARNING_AGENTS = [
 
 let chatSessionId = null;
 
+const LEARNING_RECOMMENDATIONS = [
+  { icon: '📈', title: 'GMV下降原因分析', desc: '学习如何系统化分析GMV波动' },
+  { icon: '✍', title: 'Prompt设计方法', desc: '掌握高质量Prompt撰写技巧' },
+  { icon: '📊', title: '数据分析方法', desc: '对比分析、归因分析、漏斗分析' },
+  { icon: '🎯', title: '经营决策训练', desc: '数据驱动的预算分配与ROI优化' },
+  { icon: '🤖', title: 'AI工具应用', desc: '学习如何用AI辅助业务分析' },
+  { icon: '🔄', title: '归因分析模型', desc: '多维度归因分析实战方法' },
+];
+
 function renderLearningPage() {
   const main = document.getElementById('appMain');
   main.innerHTML = `
@@ -36,9 +45,22 @@ function renderLearningPage() {
       <main class="middle-panel">
         <div class="panel-title" style="margin-bottom:6px">💬 AI学习助手 <span class="badge" id="chatAgentLabel">启发式交互</span></div>
         <div class="chat-area" id="chatArea">
-          ${emptyStateHTML('💬', '开始对话', '向AI学习助手提问，开始启发式学习之旅', '开始对话', 'startNewChat()')}
+          <div style="text-align:center;padding:14px 10px 6px;color:rgba(255,255,255,.3);font-size:11px;flex-shrink:0">
+            👋 欢迎！选择一个知识点开始学习，或直接提问
+          </div>
+          <div id="learningRecommendations" style="display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:4px 0;flex-shrink:0">
+            ${LEARNING_RECOMMENDATIONS.map(r => `
+              <div class="cc" style="margin:0;cursor:pointer" onclick="quickLearn('${r.title}')">
+                <div class="ch" style="padding:6px 10px">
+                  <span class="ci">${r.icon}</span>
+                  <span class="ct" style="font-size:11px">${r.title}</span>
+                </div>
+                <div class="cbd" style="padding:4px 10px 6px;font-size:9px;color:rgba(255,255,255,.4)">${r.desc}</div>
+              </div>
+            `).join('')}
+          </div>
         </div>
-        <div class="chat-input-area" id="chatInputArea" style="display:none">
+        <div class="chat-input-area" id="chatInputArea">
           <input type="text" id="chatInput" placeholder="请输入你的问题..." onkeydown="if(event.key==='Enter')sendMessage()">
           <button onclick="sendMessage()">发送</button>
         </div>
@@ -53,6 +75,12 @@ function renderLearningPage() {
 
   renderLearningAgents();
   loadChatData();
+}
+
+function quickLearn(topic) {
+  // Send a predefined learning message
+  document.getElementById('chatInput').value = `请给我详细讲解「${topic}」的相关知识`;
+  sendMessage();
 }
 
 function renderLearningAgents() {
@@ -116,7 +144,22 @@ async function loadChatData() {
 
 async function startNewChat() {
   chatSessionId = null;
-  document.getElementById('chatArea').innerHTML = '<div style="text-align:center;padding:20px;color:rgba(255,255,255,.2);font-size:11px">新会话已创建，开始提问吧</div>';
+  const area = document.getElementById('chatArea');
+  area.innerHTML = `
+    <div style="text-align:center;padding:14px 10px 6px;color:rgba(255,255,255,.3);font-size:11px;flex-shrink:0">
+      👋 新会话已创建！选择一个知识点开始学习，或直接提问
+    </div>
+    <div id="learningRecommendations" style="display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:4px 0;flex-shrink:0">
+      ${LEARNING_RECOMMENDATIONS.map(r => `
+        <div class="cc" style="margin:0;cursor:pointer" onclick="quickLearn('${r.title}')">
+          <div class="ch" style="padding:6px 10px">
+            <span class="ci">${r.icon}</span>
+            <span class="ct" style="font-size:11px">${r.title}</span>
+          </div>
+          <div class="cbd" style="padding:4px 10px 6px;font-size:9px;color:rgba(255,255,255,.4)">${r.desc}</div>
+        </div>
+      `).join('')}
+    </div>`;
   document.getElementById('chatInputArea').style.display = 'flex';
   document.getElementById('chatInput').focus();
   highlightLearningAgent(-1);
@@ -149,8 +192,9 @@ async function sendMessage() {
 
   const area = document.getElementById('chatArea');
 
-  // Clear empty state, show input
-  document.getElementById('chatInputArea').style.display = 'flex';
+  // Remove recommendations once user starts chatting
+  const recs = document.getElementById('learningRecommendations');
+  if (recs) recs.remove();
 
   // Add user message
   area.innerHTML += `<div class="msg user"><div>${escapeHtml(msg)}</div><div class="msg-info">你 · 刚刚</div></div>`;

@@ -338,6 +338,9 @@ class SimulationGenerator:
         elif difficulty == "hard":
             total, duration = 12, 90
 
+        # 调整题型分布：客观题+主观题
+        obj_count = max(2, total * 3 // 5)  # 60%客观题
+        subj_count = total - obj_count      # 40%主观题
         return {
             "objective": f"评估{profile.get('role', '业务分析师')}的AI辅助业务分析能力",
             "dimensions": ["业务理解", "数据分析", "AI工具应用", "经营决策"],
@@ -345,11 +348,11 @@ class SimulationGenerator:
             "total_questions": total,
             "duration_minutes": duration,
             "distribution": {
-                "基础知识题": {"count": max(2, total // 5), "difficulty": difficulty},
-                "AI工具使用题": {"count": max(2, total // 5), "difficulty": difficulty},
-                "数据分析题": {"count": max(2, total // 5), "difficulty": difficulty},
-                "业务案例分析题": {"count": max(1, total // 5), "difficulty": difficulty},
-                "经营决策题": {"count": max(1, total - (total // 5) * 4), "difficulty": difficulty},
+                "基础知识题": {"count": max(1, obj_count // 4), "difficulty": difficulty},
+                "AI工具使用题": {"count": max(1, obj_count // 4), "difficulty": difficulty},
+                "数据分析题": {"count": max(1, obj_count // 4), "difficulty": difficulty},
+                "业务案例分析题": {"count": max(1, subj_count // 2 + obj_count % 2), "difficulty": difficulty},
+                "经营决策题": {"count": max(1, subj_count // 2), "difficulty": difficulty},
             },
         }
 
@@ -389,6 +392,7 @@ class SimulationGenerator:
                     ],
                     "answer": "B",
                     "analysis": "GMV = 访客数 × 转化率 × 客单价，这是电商最核心的经营指标公式。",
+                    "question_type": "objective",
                 },
                 {
                     "stem": "在电商数据分析中，什么是'漏斗分析'？",
@@ -400,6 +404,7 @@ class SimulationGenerator:
                     ],
                     "answer": "B",
                     "analysis": "漏斗分析追踪用户在每个环节的行为转化，找出流失关键节点。",
+                    "question_type": "objective",
                 },
                 {
                     "stem": "以下哪个指标最能反映电商平台的用户粘性？",
@@ -411,6 +416,7 @@ class SimulationGenerator:
                     ],
                     "answer": "B",
                     "analysis": "复购率反映了用户对平台的忠诚度和持续使用意愿。",
+                    "question_type": "objective",
                 },
                 {
                     "stem": "什么是A/B测试？在电商场景中如何使用？",
@@ -422,6 +428,7 @@ class SimulationGenerator:
                     ],
                     "answer": "B",
                     "analysis": "A/B测试是随机分流对比试验，用于验证页面改动、算法优化等方案的效果。",
+                    "question_type": "objective",
                 },
             ],
             "AI工具使用题": [
@@ -435,6 +442,7 @@ class SimulationGenerator:
                     ],
                     "answer": "B",
                     "analysis": "好的Prompt应包含角色设定、具体任务、分析维度和输出要求。",
+                    "question_type": "objective",
                 },
                 {
                     "stem": "在使用AI进行业务分析时，以下哪种做法最能提高分析质量？",
@@ -446,6 +454,7 @@ class SimulationGenerator:
                     ],
                     "answer": "B",
                     "analysis": "将复杂业务问题拆解为多个子任务，分步与AI协作，能获得更有深度的分析结果。",
+                    "question_type": "objective",
                 },
                 {
                     "stem": "AI在电商数据分析中不能完成以下哪项任务？",
@@ -457,6 +466,7 @@ class SimulationGenerator:
                     ],
                     "answer": "C",
                     "analysis": "AI提供决策建议，但最终决策需要人工审核和判断，不能完全依赖AI。",
+                    "question_type": "objective",
                 },
             ],
             "数据分析题": [
@@ -470,6 +480,7 @@ class SimulationGenerator:
                     ],
                     "answer": "B",
                     "analysis": "(85-100)/100 = -15%，即同比下降15%。",
+                    "question_type": "objective",
                 },
                 {
                     "stem": "某品牌广告投放数据：曝光100000次，点击3000次，转化90单。点击率和转化率分别是？",
@@ -481,6 +492,7 @@ class SimulationGenerator:
                     ],
                     "answer": "A",
                     "analysis": "点击率 = 3000/100000 = 3%，转化率 = 90/3000 = 3%。",
+                    "question_type": "objective",
                 },
             ],
             "业务案例分析题": [
@@ -494,6 +506,7 @@ class SimulationGenerator:
                     ],
                     "answer": "B",
                     "analysis": "GMV下滑应系统性地从流量、转化、客单价、退款四个维度拆解分析，找出核心原因。",
+                    "question_type": "objective",
                 },
                 {
                     "stem": "618大促期间，A渠道ROI为4.5（花费10万，GMV45万），B渠道ROI为1.8（花费50万，GMV90万），以下说法正确的是？",
@@ -505,6 +518,7 @@ class SimulationGenerator:
                     ],
                     "answer": "B",
                     "analysis": "ROI和GMV需要综合权衡。B渠道虽然ROI较低，但贡献了更多GMV，应该优化而非放弃。",
+                    "question_type": "objective",
                 },
             ],
             "经营决策题": [
@@ -518,6 +532,7 @@ class SimulationGenerator:
                     ],
                     "answer": "A",
                     "analysis": "按当前进度15天×5万=75万，总共195万缺口5万。适当加大营销投入可弥补缺口，是合理决策。",
+                    "question_type": "objective",
                 },
                 {
                     "stem": "某商品毛利率为25%，退货率为15%，广告ROI为2.5。以下哪个指标对利润影响最大？",
@@ -529,9 +544,66 @@ class SimulationGenerator:
                     ],
                     "answer": "D",
                     "analysis": "毛利率、退货率、广告ROI三者共同决定最终利润，需要系统性优化而非只关注单一指标。",
+                    "question_type": "objective",
                 },
             ],
         }
+
+        # Add subjective questions pool
+        subjective_pool = {
+            "业务案例分析题": [
+                {
+                    "stem": f"你是一个{role}，请分析以下场景并给出你的诊断：某电商品牌上个月的GMV为500万，环比下降20%。从流量、转化率、客单价和退款率四个维度分析可能的原因，并给出具体的改进建议。",
+                    "question_type": "subjective",
+                    "evaluation_criteria": ["是否从四个维度全面分析", "分析逻辑是否清晰", "建议是否具体可行"],
+                    "reference_answer": "应系统性拆解GMV=访客数×转化率×客单价，对比各维度数据变化找出核心问题维度，再进行归因分析，最后给出针对性建议。"
+                },
+                {
+                    "stem": f"作为{role}，某电商平台发现新用户首单转化率持续偏低（从12%降至7%），请分析可能的原因，并设计一个A/B测试方案来验证你的假设。",
+                    "question_type": "subjective",
+                    "evaluation_criteria": ["原因假设是否合理全面", "A/B测试方案设计是否科学", "是否考虑了样本量和置信度"],
+                    "reference_answer": "应从流量质量、落地页体验、新客权益、注册流程等方面分析原因。A/B测试应设定单一变量、明确核心指标、计算所需样本量。"
+                },
+                {
+                    "stem": f"作为{role}，请设计一个用户流失预警方案。你需要说明：哪些指标可以作为流失预警信号？如何设定预警阈值？当预警触发后应采取什么措施？",
+                    "question_type": "subjective",
+                    "evaluation_criteria": ["预警指标选择是否合理", "阈值设定是否有依据", "应对措施是否可执行"],
+                    "reference_answer": "预警指标可包括：登录频次下降、购买间隔拉长、客单价降低等。阈值应基于历史数据分布设定，措施应分级应对。"
+                },
+            ],
+            "经营决策题": [
+                {
+                    "stem": f"你是某电商平台的{role}，有三个营销渠道可供选择：\nA渠道：ROI 3.5，但触达用户量少（月均5万）\nB渠道：ROI 2.8，触达用户量中等（月均20万）\nC渠道：ROI 1.6，触达用户量最大（月均80万）\n总预算100万，你会如何分配？请详细说明你的决策逻辑。\n\n同时请分析：如果目标是'最大化GMV'和'最大化ROI'，两种策略有何不同？",
+                    "question_type": "subjective",
+                    "evaluation_criteria": ["是否理解不同目标下的策略差异", "预算分配方案是否有逻辑支撑", "是否考虑了渠道间的协同效应"],
+                    "reference_answer": "最大化GMV应优先ROI高的渠道并逐步扩展到规模渠道；最大化ROI应集中预算在高效渠道。两种目标需要平衡，可采取组合策略。"
+                },
+                {
+                    "stem": f"作为{role}，请为以下情况制定经营策略：\n- 某品类GMV连续两月下滑，但行业整体增长了8%\n- 该品类是平台核心品类（占比35% GMV）\n- 竞品近期加大促销力度，折扣率从8折降至6折\n- 你的营销预算剩余20%\n\n请分析当前局势并提出具体的应对策略。",
+                    "question_type": "subjective",
+                    "evaluation_criteria": ["局势分析是否全面", "应对策略是否对症下药", "预算分配是否合理", "是否有数据支撑决策"],
+                    "reference_answer": "应从行业对比、竞品分析、自身问题诊断三个维度分析。策略应聚焦差异化竞争、精细化运营和预算优化。"
+                },
+            ],
+        }
+
+        # 每生成2-3道客观题，混入1道主观题
+        # 主观题覆盖"业务案例分析题"和"经营决策题"两类
+        use_subjective = False
+        if qtype in ("业务案例分析题", "经营决策题") and num % 3 == 0:
+            use_subjective = True
+
+        if use_subjective and qtype in subjective_pool:
+            sp = subjective_pool[qtype]
+            q = random.choice(sp).copy()
+            q.update({
+                "id": f"q_{num}",
+                "type": qtype,
+                "sub_type": "主观题",
+                "difficulty": difficulty,
+                "score": cls._question_score(qtype, difficulty) + 5,
+            })
+            return q
 
         questions_pool = pool.get(qtype, [])
         if not questions_pool:

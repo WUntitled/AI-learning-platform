@@ -70,34 +70,24 @@ function renderPracticeScenario(scenario) {
   if (!content) return;
   let html = '<div style="flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:8px">';
 
+  // Title section
   html += `<div class="cc"><div class="ch"><span class="ci">🎯</span><span class="ct">${scenario.title||'实战题目'}</span><span class="cb">场景</span></div><div class="cbd"><div style="font-size:11px;line-height:1.7;color:rgba(255,255,255,.65)">${scenario.description||''}</div></div></div>`;
-
-  // Data display
-  if (scenario.data) {
-    html += `<div class="cc"><div class="ch"><span class="ci">📊</span><span class="ct">参考数据</span><span class="cb">分析素材</span></div><div class="cbd">`;
-    if (typeof scenario.data === 'object') {
-      html += '<div style="font-size:10px;line-height:1.6;color:rgba(255,255,255,.5)"><pre style="font-family:inherit;white-space:pre-wrap">' +
-        JSON.stringify(scenario.data, null, 2).replace(/\n/g,'<br>').replace(/ /g,'&nbsp;') +
-        '</pre></div>';
-    }
-    html += '</div></div>';
-  }
 
   // Questions
   if (scenario.questions && scenario.questions.length) {
     html += `<div class="cc"><div class="ch"><span class="ci">❓</span><span class="ct">问题</span><span class="cb">${scenario.questions.length}题</span></div><div class="cbd">`;
     scenario.questions.forEach((q, i) => {
-      html += `<div style="font-size:10px;color:rgba(255,255,255,.65);padding:4px 0;border-bottom:1px solid rgba(255,255,255,.04)">
+      html += `<div style="font-size:10px;color:rgba(255,255,255,.65);padding:6px 0;border-bottom:1px solid rgba(255,255,255,.04)">
         <strong>Q${i+1}.</strong> ${q}
       </div>`;
     });
     html += '</div></div>';
   }
 
-  // Answer area
-  html += `<div class="cc"><div class="ch"><span class="ci">✍</span><span class="ct">你的回答</span></div><div class="cbd">
+  // Answer area - ensure submit button is clearly visible
+  html += `<div class="cc" style="flex-shrink:0"><div class="ch"><span class="ci">✍</span><span class="ct">你的回答</span></div><div class="cbd">
     <textarea id="practiceAnswer" placeholder="在此输入你的分析和回答..." style="width:100%;min-height:120px;padding:8px;border:1px solid rgba(79,195,247,.12);border-radius:6px;background:rgba(255,255,255,.03);color:#e8edf5;font-family:inherit;font-size:11px;resize:vertical;outline:none"></textarea>
-    <button class="btn-primary" style="margin-top:6px" onclick="submitPractice()">📤 提交回答</button>
+    <button class="btn-primary" style="margin-top:6px;width:100%" onclick="submitPractice()">📤 提交回答</button>
   </div></div>`;
 
   html += '</div>';
@@ -106,7 +96,7 @@ function renderPracticeScenario(scenario) {
 
 async function submitPractice() {
   const answer = document.getElementById('practiceAnswer')?.value?.trim();
-  if (!answer || answer.length < 5) { alert('请先输入你的回答'); return; }
+  if (!answer) { alert('请先输入你的回答'); return; }
   if (!practiceSessionId) { alert('请先开始一个实战场景'); return; }
 
   const content = document.getElementById('practiceContent');

@@ -157,40 +157,75 @@ class LLMService:
     # ================================================================
 
     def _simulate_grading(self, questions: list, answers: list, answer_key: list) -> dict:
-        """模拟评分"""
+        """模拟评分（支持客观题和主观题）"""
         total_score = 0
         max_score = 0
         details = []
+        import random as _random
 
         for i, q in enumerate(questions):
             q_score = q.get("score", 10)
             max_score += q_score
             user_answer = ""
             for a in answers:
-                if a.get("question_id") == q.get("id"):
+                if a.get("question_id") == q.get("id") or a.get("question_id") == f"q_{i+1}":
                     user_answer = a.get("answer", "")
                     break
 
-            # 模拟评分：检查答案中是否包含关键词
-            correct = q.get("answer", "")
-            is_correct = False
-            if correct and user_answer:
-                is_correct = correct[0].upper() in user_answer.upper()
-            elif user_answer and len(user_answer) > 20:
-                is_correct = True
+            is_subjective = q.get("question_type") == "subjective" or q.get("sub_type") == "主观题"
 
-            score = q_score if is_correct else 0
+            if is_subjective:
+                # 主观题评分：根据回答长度和内容深度给分
+                if user_answer and len(user_answer) > 5:
+                    # 主观题给一个基于质量的比例分（60%-90%）
+                    length_score = min(1.0, len(user_answer) / 200)
+                    keyword_score = 0
+                    criteria = q.get("evaluation_criteria", [])
+                    for c in criteria:
+                        if any(kw in user_answer for kw in c[:4]):
+                            keyword_score += 0.2
+                    keyword_score = min(keyword_score, 0.6)
+                    ratio = max(0.6, min(0.9, 0.5 + length_score * 0.2 + keyword_score * 0.3))
+                    score = int(q_score * ratio)
+                    is_correct = score >= q_score * 0.6
+                else:
+                    score = 0
+                    is_correct = False
+
+                details.append({
+                    "question_id": q.get("id", f"q_{i}"),
+                    "question": q.get("stem", "")[:80],
+                    "correct_answer": q.get("reference_answer", "主观题，参考评分标准"),
+                    "user_answer": (user_answer or "")[:200],
+                    "score": score,
+                    "max_score": q_score,
+                    "is_correct": is_correct,
+                    "question_type": "subjective",
+                })
+            else:
+                # 客观题评分：检查答案中是否包含关键词
+                correct = q.get("answer", "")
+                is_correct = False
+                if correct and user_answer:
+                    is_correct = correct[0].upper() in user_answer.upper()
+                elif user_answer and len(user_answer) > 20:
+                    is_correct = True
+
+                score = q_score if is_correct else 0
+                total_score += score
+
+                details.append({
+                    "question_id": q.get("id", f"q_{i}"),
+                    "question": q.get("stem", "")[:50],
+                    "correct_answer": correct,
+                    "user_answer": (user_answer or "")[:100],
+                    "score": score,
+                    "max_score": q_score,
+                    "is_correct": is_correct,
+                    "question_type": "objective",
+                })
+
             total_score += score
-
-            details.append({
-                "question_id": q.get("id", f"q_{i}"),
-                "question": q.get("stem", "")[:50],
-                "correct_answer": correct,
-                "user_answer": user_answer[:100],
-                "score": score,
-                "max_score": q_score,
-                "is_correct": is_correct,
-            })
 
         percentage = round((total_score / max_score * 100), 1) if max_score > 0 else 0
         return {

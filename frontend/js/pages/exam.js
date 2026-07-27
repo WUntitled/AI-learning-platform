@@ -83,22 +83,32 @@ function renderExamQuestions(exam) {
 
   // Questions
   (exam.questions||[]).forEach((q, i) => {
+    const isSubjective = q.question_type === 'subjective' || q.sub_type === '主观题';
     html += `<div class="question-card">
       <div class="q-header">
         <span class="q-num">${i+1}</span>
-        <span class="q-type">${q.type||'题'}</span>
+        <span class="q-type">${isSubjective ? (q.sub_type || '主观题') : (q.type||'题')}</span>
         <span style="font-size:8px;padding:1px 6px;border-radius:4px;background:rgba(0,200,83,.06);color:#00c853">${q.difficulty||'medium'}</span>
         <span class="q-score">${q.score||10}分</span>
       </div>
-      <div class="q-stem">${q.stem||''}</div>
-      <div class="q-options">`;
-    (q.options||[]).forEach((opt, oi) => {
-      const optLetter = String.fromCharCode(65 + oi);
-      const checked = examAnswers[q.id] === optLetter;
-      html += `<input type="radio" name="q_${q.id}" id="q_${q.id}_${optLetter}" value="${optLetter}" ${checked?'checked':''} onchange="examAnswers['${q.id}']='${optLetter}'">
-        <label for="q_${q.id}_${optLetter}">${opt}</label>`;
-    });
-    html += `</div></div>`;
+      <div class="q-stem">${q.stem||''}</div>`;
+    if (isSubjective) {
+      // Subjective question: show textarea
+      html += `<div style="margin-top:8px">
+        <textarea id="subj_answer_${q.id}" style="width:100%;min-height:80px;padding:8px;border:1px solid rgba(79,195,247,.12);border-radius:6px;background:rgba(255,255,255,.03);color:#e8edf5;font-family:inherit;font-size:11px;resize:vertical;outline:none" placeholder="请输入你的分析和回答..." onchange="examAnswers['${q.id}']=this.value" oninput="examAnswers['${q.id}']=this.value"></textarea>
+        <div style="font-size:8px;color:rgba(255,255,255,.2);margin-top:3px">💡 ${q.reference_answer ? '提示：' + q.reference_answer : '请尽量详细阐述你的分析思路和结论'}</div>
+      </div>`;
+    } else {
+      html += `<div class="q-options">`;
+      (q.options||[]).forEach((opt, oi) => {
+        const optLetter = String.fromCharCode(65 + oi);
+        const checked = examAnswers[q.id] === optLetter;
+        html += `<input type="radio" name="q_${q.id}" id="q_${q.id}_${optLetter}" value="${optLetter}" ${checked?'checked':''} onchange="examAnswers['${q.id}']='${optLetter}'">
+          <label for="q_${q.id}_${optLetter}">${opt}</label>`;
+      });
+      html += `</div>`;
+    }
+    html += `</div>`;
   });
 
   html += '</div>';
@@ -140,46 +150,47 @@ function renderExamResult(result) {
   if (!content) return;
   const scoring = result.scoring || {};
   const report = result.report || {};
-  let html = '<div style="flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:8px">';
+  let html = '<div style="flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:6px">';
 
-  // Score card
-  html += `<div class="cc"><div class="ch"><span class="ci">📊</span><span class="ct">考试成绩</span></div><div class="cbd" style="text-align:center;padding:16px">`;
+  // Score card - reduced font sizes to avoid overlap
+  html += `<div class="cc"><div class="ch"><span class="ci">📊</span><span class="ct">考试成绩</span></div><div class="cbd" style="text-align:center;padding:12px">`;
   const passed = scoring.passed;
-  html += `<div style="font-size:36px;font-weight:700;color:${passed?'#00c853':'#ff5252'}">${scoring.percentage||0}%</div>`;
-  html += `<div style="font-size:13px;color:${passed?'rgba(0,200,83,.6)':'rgba(255,82,82,.6)'};margin-top:4px">${passed?'✅ 合格':'❌ 未合格'}</div>`;
-  html += `<div style="font-size:11px;color:rgba(255,255,255,.35);margin-top:8px">${scoring.total_score||0}/${scoring.max_score||0} 分</div>`;
+  html += `<div style="font-size:28px;font-weight:700;color:${passed?'#00c853':'#ff5252'}">${scoring.percentage||0}%</div>`;
+  html += `<div style="font-size:10px;color:${passed?'rgba(0,200,83,.6)':'rgba(255,82,82,.6)'};margin-top:2px">${passed?'✅ 合格':'❌ 未合格'}</div>`;
+  html += `<div style="font-size:10px;color:rgba(255,255,255,.35);margin-top:4px">${scoring.total_score||0}/${scoring.max_score||0} 分</div>`;
   html += '</div></div>';
 
   // Score details
   if (scoring.details && scoring.details.length) {
-    html += `<div class="cc"><div class="ch"><span class="ci">🔍</span><span class="ct">答题详情</span></div><div class="cbd">`;
+    html += `<div class="cc"><div class="ch"><span class="ci">🔍</span><span class="ct">答题详情</span></div><div class="cbd" style="max-height:200px;overflow-y:auto">`;
     scoring.details.forEach(d => {
       const correct = d.is_correct;
-      html += `<div style="display:flex;align-items:center;gap:6px;padding:4px 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:10px">
-        <span style="color:${correct?'#00c853':'#ff5252'};font-weight:700">${correct?'✓':'✕'}</span>
-        <span style="flex:1;color:rgba(255,255,255,.5)">${truncate(d.question||d.question_id||'', 30)}</span>
-        <span style="color:rgba(255,255,255,.3)">${d.score||0}/${d.max_score||0}</span>
+      const isSubj = d.question_type === 'subjective';
+      html += `<div style="display:flex;align-items:flex-start;gap:4px;padding:3px 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:9px">
+        <span style="color:${correct?'#00c853':'#ff5252'};font-weight:700;flex-shrink:0;min-width:12px">${correct?'✓':'✕'}</span>
+        <span style="flex:1;color:rgba(255,255,255,.55);line-height:1.4">${truncate(d.question||d.question_id||'', 40)}</span>
+        <span style="color:rgba(255,255,255,.3);white-space:nowrap;flex-shrink:0">${d.score||0}/${d.max_score||0}</span>
       </div>`;
     });
     html += '</div></div>';
   }
 
-  // Radar chart
+  // Radar chart - reduced canvas size
   if (report.radar) {
-    html += `<div class="cc"><div class="ch"><span class="ci">📈</span><span class="ct">能力雷达图</span></div><div class="cbd"><div><canvas id="examReportRadar" width="280" height="200"></canvas></div></div></div>`;
+    html += `<div class="cc"><div class="ch"><span class="ci">📈</span><span class="ct">能力雷达图</span></div><div class="cbd" style="text-align:center;padding:4px"><div><canvas id="examReportRadar" width="200" height="160" style="width:200px;height:160px"></canvas></div></div></div>`;
   }
 
-  // Report suggestions
+  // Report suggestions - compact
   if (report.suggestions && report.suggestions.length) {
-    html += `<div class="cc"><div class="ch"><span class="ci">💡</span><span class="ct">培训建议</span></div><div class="cbd"><ul style="padding-left:16px;font-size:10px;line-height:1.8;color:rgba(255,255,255,.55)">`;
+    html += `<div class="cc"><div class="ch"><span class="ci">💡</span><span class="ct">培训建议</span></div><div class="cbd" style="max-height:120px;overflow-y:auto"><ul style="padding-left:14px;font-size:9px;line-height:1.6;color:rgba(255,255,255,.55)">`;
     report.suggestions.forEach(s => { html += `<li>${s}</li>`; });
     html += '</ul></div></div>';
   }
 
   // View full report
-  html += `<div class="nb">
-    <button class="btn-secondary" style="flex:1" onclick="navigateTo('report')">📊 查看完整学情报告</button>
-    <button class="btn-secondary" style="flex:1" onclick="createNewExam()">🔄 重新考试</button>
+  html += `<div class="nb" style="flex-shrink:0">
+    <button class="btn-secondary" style="flex:1;font-size:9px;padding:4px 6px" onclick="navigateTo('report')">📊 查看完整学情报告</button>
+    <button class="btn-secondary" style="flex:1;font-size:9px;padding:4px 6px" onclick="createNewExam()">🔄 重新考试</button>
   </div>`;
   html += '</div>';
   content.innerHTML = html;
