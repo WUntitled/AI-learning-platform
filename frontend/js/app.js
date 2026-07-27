@@ -47,6 +47,10 @@ function openAgentDrawer(idx, module = 'course') {
   // Dispatch to page-specific drawer
   if (module === 'learning') {
     if (typeof openLearningAgentDrawer === 'function') openLearningAgentDrawer(idx);
+  } else if (module === 'practice') {
+    if (typeof openPracticeAgentDrawer === 'function') openPracticeAgentDrawer(idx);
+  } else if (module === 'exam') {
+    if (typeof openExamAgentDrawer === 'function') openExamAgentDrawer(idx);
   } else {
     if (typeof openCourseAgentDrawer === 'function') openCourseAgentDrawer(idx);
   }

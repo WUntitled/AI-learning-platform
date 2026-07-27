@@ -5,6 +5,19 @@
  */
 let practiceSessionId = null;
 
+const PRACTICE_AGENTS = [
+  { idx: 1, cn: '训练规划 Agent', en: 'Training Planner', desc: '根据学习者画像和实战目标，制定个性化的训练计划',
+    inp: ['学习者画像','实战目标','历史表现'], out: ['训练计划','评估指标','难度建议'] },
+  { idx: 2, cn: '场景生成 Agent', en: 'Scenario Generator', desc: '根据训练计划生成真实的业务实战场景',
+    inp: ['训练计划','业务知识库'], out: ['实战场景','背景数据','任务描述'] },
+  { idx: 3, cn: '过程评估 Agent', en: 'Process Evaluator', desc: '实时评估学习者的回答质量和分析能力',
+    inp: ['用户回答','场景答案','评分标准'], out: ['能力评分','维度分析','改进建议'] },
+  { idx: 4, cn: '反馈优化 Agent', en: 'Feedback Optimizer', desc: '根据评估结果生成针对性的优化反馈',
+    inp: ['评估结果','用户画像'], out: ['优化建议','学习资源推荐','练习调整'] },
+  { idx: 5, cn: '学情更新 Agent', en: 'Profile Updater', desc: '根据实战表现更新学习者的能力画像',
+    inp: ['实战表现','评估报告'], out: ['画像更新','能力变化','新学习路径'] },
+];
+
 function renderPracticePage() {
   const main = document.getElementById('appMain');
   main.innerHTML = `
@@ -35,16 +48,41 @@ function renderPracticePage() {
       <aside class="right-panel">
         <div class="panel-title">🤖 陪练Agent <span class="badge">模拟</span></div>
         <div id="practiceAgentFlow" style="display:flex;flex-direction:column;gap:2px">
-          ${['训练规划','场景生成','过程评估','反馈优化','学情更新'].map((n, i) =>
-            `<div class="agent-card idle"><div class="index">${String(i+1).padStart(2,'0')}</div><div class="info"><div class="cn">${n} Agent</div></div><div class="status-icon">○</div></div>`
-            + (i < 4 ? '<div class="agent-arrow"><span class="chevron">▼</span></div>' : '')
+          ${PRACTICE_AGENTS.map((a, i) =>
+            `<div class="agent-card idle" data-idx="${a.idx}" data-module="practice"><div class="index">${String(a.idx).padStart(2,'0')}</div><div class="info"><div class="cn">${a.cn}</div><div class="en">${a.en}</div></div><div class="status-icon">○</div></div>`
+            + (i < PRACTICE_AGENTS.length - 1 ? '<div class="agent-arrow"><span class="chevron">▼</span></div>' : '')
           ).join('')}
         </div>
       </aside>
     </div>
   </div>`;
 
+  // Add click handlers for agent cards
+  document.querySelectorAll('#practiceAgentFlow .agent-card').forEach(el => {
+    el.addEventListener('click', () => openPracticeAgentDrawer(parseInt(el.dataset.idx)));
+  });
+
   loadPracticeHistory();
+}
+
+function openPracticeAgentDrawer(idx) {
+  const a = PRACTICE_AGENTS.find(x => x.idx === idx);
+  if (!a) return;
+  const card = document.querySelector(`#practiceAgentFlow .agent-card[data-idx="${idx}"]`);
+  const status = card?.classList.contains('completed') ? '已完成' :
+                 card?.classList.contains('active') ? '运行中' : '就绪';
+  const sc = status === '已完成' ? '#00c853' : status === '运行中' ? '#4fc3f7' : 'rgba(255,255,255,.35)';
+
+  document.getElementById('drIcon').textContent = ['📋','🎯','📊','💡','🔄'][idx-1] || '🤖';
+  document.getElementById('drNumber').textContent = String(idx).padStart(2,'0');
+  document.getElementById('drCn').textContent = a.cn;
+  document.getElementById('drEn').textContent = a.en;
+  document.getElementById('drStatus').innerHTML = `<span style="color:${sc}">●</span> ${status}`;
+  document.getElementById('drawerBody').innerHTML = `
+    <div class="d-section"><div class="ds-title">🎯 职责</div><div class="ds-desc">${a.desc||'—'}</div></div>
+    <div class="d-section"><div class="ds-title">📥 输入</div><div class="ds-tags">${(a.inp||[]).map(i => `<span class="ds-tag"><span class="tb">▹</span>${i}</span>`).join('')}</div></div>
+    <div class="d-section"><div class="ds-title">📤 输出</div><div class="ds-tags">${(a.out||[]).map(o => `<span class="ds-tag"><span class="tb">▹</span>${o}</span>`).join('')}</div></div>`;
+  document.getElementById('drawerOverlay').classList.add('active');
 }
 
 async function startPractice(type) {

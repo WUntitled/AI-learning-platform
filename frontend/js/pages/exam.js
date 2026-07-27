@@ -6,6 +6,19 @@
 let currentExam = null;
 let examAnswers = {};
 
+const EXAM_AGENTS = [
+  { idx: 1, cn: '考试蓝图 Agent', en: 'Exam Blueprint', desc: '根据学情画像设计考试蓝图和出题策略',
+    inp: ['学习者画像','考试目标','知识图谱'], out: ['蓝图设计','难度配置','题型分布'] },
+  { idx: 2, cn: '出题 Agent', en: 'Question Generator', desc: '按照蓝图生成各类考试题目',
+    inp: ['蓝图设计','知识库'], out: ['客观题','主观题','参考答案'] },
+  { idx: 3, cn: '答案评分 Agent', en: 'Answer Scorer', desc: '对学习者提交的答案进行智能评分',
+    inp: ['用户答案','参考答案','评分标准'], out: ['各题评分','评分详情','正确率分析'] },
+  { idx: 4, cn: '个性化组卷 Agent', en: 'Personalized Compiler', desc: '根据学习薄弱点进行个性化组卷',
+    inp: ['学情画像','错题记录','知识缺口'], out: ['定制试卷','重点题型','难度调整'] },
+  { idx: 5, cn: '质量审核 Agent', en: 'Quality Reviewer', desc: '审核试卷质量并给出试题分析报告',
+    inp: ['试卷内容','质量标准'], out: ['审核报告','难度验证','改进建议'] },
+];
+
 function renderExamPage() {
   const main = document.getElementById('appMain');
   main.innerHTML = `
@@ -30,16 +43,41 @@ function renderExamPage() {
       <aside class="right-panel">
         <div class="panel-title">🤖 出题Agent <span class="badge">5个</span></div>
         <div id="examAgentFlow" style="display:flex;flex-direction:column;gap:2px">
-          ${['考试蓝图','出题','答案评分','个性化组卷','质量审核'].map((n, i) =>
-            `<div class="agent-card idle"><div class="index">${String(i+1).padStart(2,'0')}</div><div class="info"><div class="cn">${n} Agent</div></div><div class="status-icon">○</div></div>`
-            + (i < 4 ? '<div class="agent-arrow"><span class="chevron">▼</span></div>' : '')
+          ${EXAM_AGENTS.map((a, i) =>
+            `<div class="agent-card idle" data-idx="${a.idx}" data-module="exam"><div class="index">${String(a.idx).padStart(2,'0')}</div><div class="info"><div class="cn">${a.cn}</div><div class="en">${a.en}</div></div><div class="status-icon">○</div></div>`
+            + (i < EXAM_AGENTS.length - 1 ? '<div class="agent-arrow"><span class="chevron">▼</span></div>' : '')
           ).join('')}
         </div>
       </aside>
     </div>
   </div>`;
 
+  // Add click handlers for agent cards
+  document.querySelectorAll('#examAgentFlow .agent-card').forEach(el => {
+    el.addEventListener('click', () => openExamAgentDrawer(parseInt(el.dataset.idx)));
+  });
+
   loadExamHistory();
+}
+
+function openExamAgentDrawer(idx) {
+  const a = EXAM_AGENTS.find(x => x.idx === idx);
+  if (!a) return;
+  const card = document.querySelector(`#examAgentFlow .agent-card[data-idx="${idx}"]`);
+  const status = card?.classList.contains('completed') ? '已完成' :
+                 card?.classList.contains('active') ? '运行中' : '就绪';
+  const sc = status === '已完成' ? '#00c853' : status === '运行中' ? '#4fc3f7' : 'rgba(255,255,255,.35)';
+
+  document.getElementById('drIcon').textContent = ['📋','✍','📊','🧩','✅'][idx-1] || '🤖';
+  document.getElementById('drNumber').textContent = String(idx).padStart(2,'0');
+  document.getElementById('drCn').textContent = a.cn;
+  document.getElementById('drEn').textContent = a.en;
+  document.getElementById('drStatus').innerHTML = `<span style="color:${sc}">●</span> ${status}`;
+  document.getElementById('drawerBody').innerHTML = `
+    <div class="d-section"><div class="ds-title">🎯 职责</div><div class="ds-desc">${a.desc||'—'}</div></div>
+    <div class="d-section"><div class="ds-title">📥 输入</div><div class="ds-tags">${(a.inp||[]).map(i => `<span class="ds-tag"><span class="tb">▹</span>${i}</span>`).join('')}</div></div>
+    <div class="d-section"><div class="ds-title">📤 输出</div><div class="ds-tags">${(a.out||[]).map(o => `<span class="ds-tag"><span class="tb">▹</span>${o}</span>`).join('')}</div></div>`;
+  document.getElementById('drawerOverlay').classList.add('active');
 }
 
 async function createNewExam() {
