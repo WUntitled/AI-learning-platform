@@ -10,7 +10,7 @@
 - /api/v1/system   — 系统信息
 """
 from fastapi import APIRouter
-from ..config import settings
+from config import settings
 
 api_router = APIRouter(prefix="/api/v1")
 
