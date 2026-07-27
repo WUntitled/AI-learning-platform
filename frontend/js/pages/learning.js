@@ -228,6 +228,10 @@ async function sendMessage() {
     // Add reply
     const replyHtml = marked.parse ? marked.parse(resp.reply) : resp.reply;
     area.innerHTML += `<div class="msg assistant"><div>${replyHtml}</div><div class="msg-info">${resp.agent_route||'知识答疑Agent'} · 刚刚</div></div>`;
+    // Add "go to practice" button after response
+    area.innerHTML += `<div style="display:flex;justify-content:center;margin:4px 0 8px">
+      <button class="btn-secondary" style="font-size:10px;padding:4px 14px" onclick="navigateTo('practice')">⚡ 去AI陪练实战演练 →</button>
+    </div>`;
     area.scrollTop = area.scrollHeight;
 
     // Complete agent flow

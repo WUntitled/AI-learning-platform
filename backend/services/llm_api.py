@@ -9,6 +9,7 @@ LLM API 服务
 """
 from __future__ import annotations
 import json
+import random
 import httpx
 from typing import Optional, AsyncGenerator, Any
 from config import settings

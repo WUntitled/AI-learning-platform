@@ -81,35 +81,56 @@ function renderExamQuestions(exam) {
     </div>
   </div></div>`;
 
-  // Questions
-  (exam.questions||[]).forEach((q, i) => {
-    const isSubjective = q.question_type === 'subjective' || q.sub_type === '主观题';
-    html += `<div class="question-card">
-      <div class="q-header">
-        <span class="q-num">${i+1}</span>
-        <span class="q-type">${isSubjective ? (q.sub_type || '主观题') : (q.type||'题')}</span>
-        <span style="font-size:8px;padding:1px 6px;border-radius:4px;background:rgba(0,200,83,.06);color:#00c853">${q.difficulty||'medium'}</span>
-        <span class="q-score">${q.score||10}分</span>
-      </div>
-      <div class="q-stem">${q.stem||''}</div>`;
-    if (isSubjective) {
-      // Subjective question: show textarea
-      html += `<div style="margin-top:8px">
-        <textarea id="subj_answer_${q.id}" style="width:100%;min-height:80px;padding:8px;border:1px solid rgba(79,195,247,.12);border-radius:6px;background:rgba(255,255,255,.03);color:#e8edf5;font-family:inherit;font-size:11px;resize:vertical;outline:none" placeholder="请输入你的分析和回答..." onchange="examAnswers['${q.id}']=this.value" oninput="examAnswers['${q.id}']=this.value"></textarea>
-        <div style="font-size:8px;color:rgba(255,255,255,.2);margin-top:3px">💡 ${q.reference_answer ? '提示：' + q.reference_answer : '请尽量详细阐述你的分析思路和结论'}</div>
-      </div>`;
-    } else {
-      html += `<div class="q-options">`;
+  // Questions — separate objective and subjective
+  const questions = exam.questions || [];
+  const objectiveQs = questions.filter(q => !(q.question_type === 'subjective' || q.sub_type === '主观题'));
+  const subjectiveQs = questions.filter(q => q.question_type === 'subjective' || q.sub_type === '主观题');
+  let qIdx = 0;
+
+  // Render objective questions first
+  if (objectiveQs.length) {
+    html += `<div style="font-size:10px;color:rgba(79,195,247,.5);font-weight:600;padding:0 4px 4px;flex-shrink:0">📋 客观题（选择题）</div>`;
+    objectiveQs.forEach((q, i) => {
+      qIdx++;
+      html += `<div class="question-card">
+        <div class="q-header">
+          <span class="q-num">${qIdx}</span>
+          <span class="q-type">${q.type||'题'}</span>
+          <span style="font-size:8px;padding:1px 6px;border-radius:4px;background:rgba(0,200,83,.06);color:#00c853">${q.difficulty||'medium'}</span>
+          <span class="q-score">${q.score||10}分</span>
+        </div>
+        <div class="q-stem">${q.stem||''}</div>
+        <div class="q-options">`;
       (q.options||[]).forEach((opt, oi) => {
         const optLetter = String.fromCharCode(65 + oi);
         const checked = examAnswers[q.id] === optLetter;
         html += `<input type="radio" name="q_${q.id}" id="q_${q.id}_${optLetter}" value="${optLetter}" ${checked?'checked':''} onchange="examAnswers['${q.id}']='${optLetter}'">
           <label for="q_${q.id}_${optLetter}">${opt}</label>`;
       });
-      html += `</div>`;
-    }
-    html += `</div>`;
-  });
+      html += `</div></div>`;
+    });
+  }
+
+  // Render subjective questions after objective
+  if (subjectiveQs.length) {
+    html += `<div style="font-size:10px;color:rgba(255,171,0,.6);font-weight:600;padding:8px 4px 4px;flex-shrink:0;border-top:1px solid rgba(255,171,0,.12);margin-top:4px">📝 主观题（论述/分析题）</div>`;
+    subjectiveQs.forEach((q, i) => {
+      qIdx++;
+      html += `<div class="question-card" style="border-color:rgba(255,171,0,.12)">
+        <div class="q-header">
+          <span class="q-num" style="background:rgba(255,171,0,.1);color:#ffab00">${qIdx}</span>
+          <span class="q-type" style="background:rgba(255,171,0,.06);color:#ffab00">${q.sub_type || '主观题'}</span>
+          <span style="font-size:8px;padding:1px 6px;border-radius:4px;background:rgba(0,200,83,.06);color:#00c853">${q.difficulty||'medium'}</span>
+          <span class="q-score">${q.score||15}分</span>
+        </div>
+        <div class="q-stem">${q.stem||''}</div>
+        <div style="margin-top:8px">
+          <textarea id="subj_answer_${q.id}" style="width:100%;min-height:80px;padding:8px;border:1px solid rgba(255,171,0,.15);border-radius:6px;background:rgba(255,255,255,.03);color:#e8edf5;font-family:inherit;font-size:11px;resize:vertical;outline:none" placeholder="请输入你的分析和回答..." onchange="examAnswers['${q.id}']=this.value" oninput="examAnswers['${q.id}']=this.value"></textarea>
+          <div style="font-size:8px;color:rgba(255,255,255,.2);margin-top:3px">💡 请尽量详细阐述你的分析思路和结论</div>
+        </div>
+      </div>`;
+    });
+  }
 
   html += '</div>';
 

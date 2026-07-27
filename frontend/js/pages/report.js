@@ -79,58 +79,89 @@ async function loadReportData() {
     });
     html += `</div></div></div></div></div>`;
 
-    // Section 2: Heatmap with proper rendering
-    html += `<div class="report-card full"><div class="rc-title">🔥 技能知识掌握热力图</div>
-      <div style="font-size:10px;overflow-x:auto">`;
-    const yLabels = ['商品分析','用户分析','渠道分析','活动分析'];
-    const xLabels = ['Excel','SQL','AI工具','BI系统'];
-    const heatData = [];
-    for (let yi = 0; yi < yLabels.length; yi++) {
-      const row = [];
-      for (let xi = 0; xi < xLabels.length; xi++) {
-        const heat = Math.max(20, Math.min(95, values[yi] + (xi * 8) + Math.floor(Math.random() * 20 - 10)));
-        row.push(heat);
-      }
-      heatData.push(row);
-    }
-    html += '<div style="display:flex;gap:3px;margin-bottom:3px;padding-left:54px">';
-    xLabels.forEach(x => { html += `<div style="flex:1;text-align:center;font-size:7px;color:rgba(255,255,255,.25)">${x}</div>`; });
-    html += '</div>';
-    heatData.forEach((row, yi) => {
-      html += '<div style="display:flex;gap:3px;align-items:center;margin-bottom:2px">';
-      html += `<div style="width:50px;font-size:8px;color:rgba(255,255,255,.35);text-align:right;flex-shrink:0">${yLabels[yi]}</div>`;
-      row.forEach(heat => {
-        const intensity = Math.round((heat / 100) * 0.35 + 0.05);
-        html += `<div style="flex:1;height:16px;border-radius:2px;background:rgba(79,195,247,${intensity});border:1px solid rgba(79,195,247,.06);display:flex;align-items:center;justify-content:center"><span style="font-size:6px;color:rgba(255,255,255,.5)">${heat}</span></div>`;
-      });
-      html += '</div>';
+    // Section 2: Skills matrix — cleaner per-topic horizontal bars
+    html += `<div class="report-card full"><div class="rc-title">🔥 技能知识掌握情况</div>
+      <div style="font-size:10px">`;
+    const topics = [
+      { name: '商品分析', key: 0 },
+      { name: '用户分析', key: 1 },
+      { name: '渠道分析', key: 2 },
+      { name: '活动分析', key: 3 },
+      { name: '数据分析', key: 4 },
+      { name: '经营决策', key: 5 },
+    ];
+    topics.forEach((t, i) => {
+      const score = Math.max(15, Math.min(95, (values[t.key] || 50) + Math.floor(Math.random() * 15 - 7)));
+      const color = score >= 70 ? '#4fc3f7' : score >= 40 ? '#ffab00' : '#ff5252';
+      html += `<div style="display:flex;align-items:center;gap:8px;margin-bottom:5px">
+        <span style="min-width:56px;font-size:9px;color:rgba(255,255,255,.4);text-align:right">${t.name}</span>
+        <div style="flex:1;height:8px;background:rgba(255,255,255,.04);border-radius:4px;overflow:hidden">
+          <div style="height:100%;width:${score}%;background:${color};border-radius:4px;transition:width .8s ease"></div>
+        </div>
+        <span style="min-width:24px;font-size:9px;color:${color};font-weight:600;text-align:right">${score}</span>
+      </div>`;
     });
     html += '</div></div>';
 
-    // Section 3: Trend - fixed bar overlap with smaller gaps and adjusted widths
+    // Section 3: Trend — SVG line chart instead of bars
     html += `<div class="report-card full"><div class="rc-title">📉 阶段能力变化趋势</div><div style="font-size:10px;color:rgba(255,255,255,.4)">`;
     const trendLabels = ['培训前','阶段一','阶段二','阶段三','本次'];
     const baseSkill = values[1] || 50;
-    const trendSkills = trendLabels.map((_, i) => Math.max(10, baseSkill - 25 + i * 10 + Math.floor(Math.random() * 6 - 3)));
-    const trendEfficiency = trendLabels.map((_, i) => Math.max(10, 90 - i * 10 + Math.floor(Math.random() * 8 - 4)));
+    const trendSkills = trendLabels.map((_, i) => Math.max(10, Math.min(95, baseSkill - 25 + i * 10 + Math.floor(Math.random() * 6 - 3))));
+    const trendEfficiency = trendLabels.map((_, i) => Math.max(10, Math.min(95, 90 - i * 10 + Math.floor(Math.random() * 8 - 4))));
+    const svgW = 300, svgH = 110, padL = 30, padR = 10, padT = 12, padB = 22;
+    const chartW = svgW - padL - padR, chartH = svgH - padT - padB;
+    const allVals = [...trendSkills, ...trendEfficiency];
+    const maxV = Math.max(...allVals, 50), minV = Math.min(...allVals, 10);
+    const range = maxV - minV || 1;
 
-    html += `<div style="display:flex;align-items:flex-end;gap:4px;height:90px;padding:6px 0">`;
-    const maxVal = Math.max(...trendSkills, ...trendEfficiency, 50);
-    trendLabels.forEach((l, i) => {
-      const h1 = Math.max(4, (trendSkills[i] / maxVal) * 70);
-      const h2 = Math.max(4, (trendEfficiency[i] / maxVal) * 70);
-      html += `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:1px">
-        <div style="font-size:7px;color:#4fc3f7">${trendSkills[i]}</div>
-        <div style="width:12px;height:${h1}px;background:linear-gradient(180deg,#4fc3f7,rgba(79,195,247,.3));border-radius:2px 2px 0 0;transition:height .8s"></div>
-        <div style="font-size:7px;color:#00c853">${trendEfficiency[i]}</div>
-        <div style="width:12px;height:${h2}px;background:linear-gradient(180deg,#00c853,rgba(0,200,83,.3));border-radius:2px 2px 0 0;transition:height .8s"></div>
-        <div style="font-size:7px;color:rgba(255,255,255,.25);margin-top:2px">${l}</div>
-      </div>`;
+    const skillPoints = trendSkills.map((v, i) => {
+      const x = padL + (i / (trendLabels.length - 1)) * chartW;
+      const y = padT + chartH - ((v - minV) / range) * chartH;
+      return { x, y, v };
     });
-    html += `</div>
-    <div style="display:flex;gap:12px;margin-top:2px;justify-content:center">
-      <span style="font-size:7px;display:flex;align-items:center;gap:3px"><span style="width:6px;height:6px;border-radius:2px;background:#4fc3f7"></span>技能得分</span>
-      <span style="font-size:7px;display:flex;align-items:center;gap:3px"><span style="width:6px;height:6px;border-radius:2px;background:#00c853"></span>任务完成效率</span>
+    const effPoints = trendEfficiency.map((v, i) => {
+      const x = padL + (i / (trendLabels.length - 1)) * chartW;
+      const y = padT + chartH - ((v - minV) / range) * chartH;
+      return { x, y, v };
+    });
+
+    html += `<svg width="${svgW}" height="${svgH}" viewBox="0 0 ${svgW} ${svgH}" style="display:block;margin:0 auto">`;
+    // Grid lines
+    for (let g = 0; g <= 4; g++) {
+      const gy = padT + (g / 4) * chartH;
+      const gv = Math.round(maxV - (g / 4) * range);
+      html += `<line x1="${padL}" y1="${gy}" x2="${svgW - padR}" y2="${gy}" stroke="rgba(255,255,255,.05)" stroke-width="0.5"/>`;
+      html += `<text x="${padL - 4}" y="${gy + 3}" fill="rgba(255,255,255,.2)" font-size="6" text-anchor="end">${gv}</text>`;
+    }
+    // X labels
+    trendLabels.forEach((l, i) => {
+      const x = padL + (i / (trendLabels.length - 1)) * chartW;
+      html += `<text x="${x}" y="${svgH - 3}" fill="rgba(255,255,255,.25)" font-size="7" text-anchor="middle">${l}</text>`;
+    });
+
+    // Skill line
+    const skillD = skillPoints.map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ');
+    html += `<path d="${skillD}" fill="none" stroke="#4fc3f7" stroke-width="1.5" stroke-linejoin="round"/>`;
+    // Skill dots
+    skillPoints.forEach(p => {
+      html += `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="3" fill="#4fc3f7" stroke="#080e2b" stroke-width="1.5"/>`;
+      html += `<text x="${p.x.toFixed(1)}" y="${(p.y - 6).toFixed(1)}" fill="#4fc3f7" font-size="6" text-anchor="middle">${p.v}</text>`;
+    });
+
+    // Efficiency line
+    const effD = effPoints.map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ');
+    html += `<path d="${effD}" fill="none" stroke="#00c853" stroke-width="1.5" stroke-linejoin="round" stroke-dasharray="3,2"/>`;
+    // Efficiency dots
+    effPoints.forEach(p => {
+      html += `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="3" fill="#00c853" stroke="#080e2b" stroke-width="1.5"/>`;
+      html += `<text x="${p.x.toFixed(1)}" y="${(p.y + 11).toFixed(1)}" fill="#00c853" font-size="6" text-anchor="middle">${p.v}</text>`;
+    });
+
+    html += `</svg>
+    <div style="display:flex;gap:16px;margin-top:2px;justify-content:center">
+      <span style="font-size:7px;display:flex;align-items:center;gap:3px"><span style="width:8px;height:2px;background:#4fc3f7;display:inline-block"></span>技能得分</span>
+      <span style="font-size:7px;display:flex;align-items:center;gap:3px"><span style="width:8px;height:2px;border-top:2px dashed #00c853;display:inline-block"></span>任务完成效率</span>
     </div></div></div>`;
 
     // Section 4: Suggestions
