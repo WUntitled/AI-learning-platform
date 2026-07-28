@@ -35,7 +35,6 @@ function renderExamPage() {
             <div id="examProgressBar" style="height:100%;width:0%;background:linear-gradient(90deg,#1a73e8,#4fc3f7);border-radius:2px;transition:width .3s ease"></div>
           </div>
         </div>
-        <button class="btn-primary" style="width:100%;padding:7px;font-size:11px" onclick="createNewExam()">📝 开始新考试</button>
         <div class="panel-title" style="margin-top:10px">📜 考试历史</div>
         <div id="examHistory" style="flex:1;overflow-y:auto;font-size:10px;display:flex;flex-direction:column;gap:3px">
           <div style="color:rgba(255,255,255,.15);text-align:center;padding:12px">暂无记录</div>

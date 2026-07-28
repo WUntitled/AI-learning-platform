@@ -6,18 +6,16 @@
  * 右面板: 多Agent协同流程可视化
  */
 
-// 渲染一道选择题
+// 渲染一道选择题（与AI考试助手样式一致：隐藏radio + label点击）
 function renderQuizQuestion(q) {
   const letters = ['A', 'B', 'C', 'D'];
   return `
     <div style="background:rgba(255,255,255,.02);border:1px solid rgba(79,195,247,.08);border-radius:6px;padding:6px 8px">
       <div style="font-size:10px;color:rgba(255,255,255,.65);margin-bottom:4px;line-height:1.4">${q.question}</div>
-      <div style="display:flex;flex-direction:column;gap:2px">
+      <div style="display:flex;flex-direction:column;gap:3px">
         ${q.options.map((opt, oi) => `
-          <label style="display:flex;align-items:center;gap:6px;padding:3px 6px;border-radius:4px;cursor:pointer;transition:all .15s;font-size:9px;color:rgba(255,255,255,.45);background:rgba(255,255,255,.015);border:1px solid transparent" onmouseover="this.style.borderColor='rgba(79,195,247,.2)';this.style.background='rgba(79,195,247,.04)'" onmouseout="if(!this.querySelector('input').checked){this.style.borderColor='transparent';this.style.background='rgba(255,255,255,.015)'}">
-            <input type="radio" name="quiz_${q.id}" value="${oi}" style="accent-color:#4fc3f7" onchange="document.querySelectorAll('label:has(input[name=&quot;quiz_${q.id}&quot;])').forEach(function(l){l.style.background='rgba(255,255,255,.015)';l.style.borderColor='transparent';l.style.color='rgba(255,255,255,.45)'});this.parentElement.style.background='rgba(79,195,247,.08)';this.parentElement.style.borderColor='rgba(79,195,247,.25)';this.parentElement.style.color='#4fc3f7'">
-            <span>${letters[oi]}. ${opt}</span>
-          </label>
+          <input type="radio" name="quiz_${q.id}" id="quiz_${q.id}_${oi}" value="${oi}" style="display:none">
+          <label for="quiz_${q.id}_${oi}" class="quiz-opt-label">${letters[oi]}. ${opt}</label>
         `).join('')}
       </div>
     </div>`;
@@ -190,6 +188,20 @@ async function loadCourseData() {
 
     statusEl.textContent = '已构建';
     contentEl.innerHTML = renderProfileContent(profile);
+
+    // 渲染能力雷达图（canvas已在renderProfileContent中创建，此处绘制）
+    const skills = profile.skills || {};
+    const radarValues = [
+      skills.business || 50, skills.dataAnalysis || 50, skills.aiApplication || 50,
+      skills.decision || 50, skills.prompt || 50, skills.continuous || 50,
+    ];
+    const dims = ['业务理解能力','数据分析能力','AI工具应用能力','经营决策能力','Prompt撰写能力','持续迭代能力'];
+    setTimeout(() => {
+      renderRadar('courseRadar', radarValues, '#4fc3f7', dims);
+      renderRadarLegend('courseRadarLegend', dims);
+    }, 100);
+    // 学习轨迹
+    renderTrajectory(profile.trajectory, 'courseTrajectory');
 
     // 检查是否已有课程
     const courses = await api.getCoursesByProfile(profile.id);
