@@ -319,6 +319,18 @@ a:hover{text-decoration:underline}
 .hr-box .hri .hrl{color:rgba(255,255,255,.3)}
 .hr-box .hri .hrv{color:#4fc3f7;font-weight:500}
 
+/* Session list items - larger */
+.session-item{
+  cursor:pointer;display:flex;align-items:center;gap:8px;
+  padding:9px 10px;border-radius:8px;font-size:11px;
+  background:rgba(255,255,255,.02);border:1px solid rgba(79,195,247,.06);
+  transition:all .2s;flex-shrink:0;
+}
+.session-item:hover{background:rgba(79,195,247,.06);border-color:rgba(79,195,247,.12);transform:translateX(2px)}
+.session-item .s-date{font-size:9px;color:rgba(255,255,255,.2);min-width:50px}
+.session-item .s-topic{flex:1;font-weight:500;color:rgba(255,255,255,.7);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.session-item .s-badge{font-size:8px;padding:1px 7px;border-radius:6px;background:rgba(79,195,247,.08);color:#4fc3f7;white-space:nowrap}
+
 /* Trajectory timeline */
 .trajectory-timeline{display:flex;flex-direction:column;gap:4px;max-height:180px;overflow-y:auto}
 .tt-item{display:flex;gap:8px;padding:4px 6px;border-radius:6px;background:rgba(255,255,255,.015);border-left:2px solid rgba(79,195,247,.12);font-size:9px;line-height:1.4}

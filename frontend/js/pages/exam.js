@@ -25,7 +25,16 @@ function renderExamPage() {
   <div class="page active" id="pageExam">
     <div class="panel-layout">
       <aside class="left-panel">
-        <div class="panel-title">📝 考试管理 <span class="badge" id="examBadge">0</span></div>
+        <div class="panel-title" style="margin-bottom:4px">📝 考试进度</div>
+        <div id="examProgressArea" style="display:none;margin-bottom:8px">
+          <div style="display:flex;justify-content:space-between;font-size:10px;margin-bottom:3px">
+            <span id="examProgressText" style="color:rgba(255,255,255,.5)">0/0 题</span>
+            <span id="examProgressPct" style="color:#4fc3f7;font-weight:600">0%</span>
+          </div>
+          <div style="height:4px;background:rgba(255,255,255,.04);border-radius:2px;overflow:hidden">
+            <div id="examProgressBar" style="height:100%;width:0%;background:linear-gradient(90deg,#1a73e8,#4fc3f7);border-radius:2px;transition:width .3s ease"></div>
+          </div>
+        </div>
         <button class="btn-primary" style="width:100%;padding:7px;font-size:11px" onclick="createNewExam()">📝 开始新考试</button>
         <div class="panel-title" style="margin-top:10px">📜 考试历史</div>
         <div id="examHistory" style="flex:1;overflow-y:auto;font-size:10px;display:flex;flex-direction:column;gap:3px">
@@ -96,11 +105,26 @@ async function createNewExam() {
       examAnswers = {};
       renderExamQuestions(exam);
       document.getElementById('examStatus').textContent = `${exam.questions.length}题 · ${exam.blueprint?.duration_minutes||60}分钟`;
+      // 显示并初始化考试进度
+      document.getElementById('examProgressArea').style.display = 'block';
+      updateExamProgress();
     } catch (e) {
       content.innerHTML = `<div class="empty-state"><div class="es-icon">⚠️</div><div class="es-title">出题失败</div><div class="es-sub">${e.message}</div></div>`;
       document.getElementById('examStatus').textContent = '失败';
     }
   });
+}
+
+function updateExamProgress() {
+  const total = (currentExam?.questions || []).length;
+  const answered = (currentExam?.questions || []).filter(q => examAnswers[q.id] && examAnswers[q.id].trim() !== '').length;
+  const pct = total > 0 ? Math.round(answered / total * 100) : 0;
+  const barEl = document.getElementById('examProgressBar');
+  const textEl = document.getElementById('examProgressText');
+  const pctEl = document.getElementById('examProgressPct');
+  if (barEl) barEl.style.width = pct + '%';
+  if (textEl) textEl.textContent = `${answered}/${total} 题`;
+  if (pctEl) pctEl.textContent = pct + '%';
 }
 
 function renderExamQuestions(exam) {
@@ -142,7 +166,7 @@ function renderExamQuestions(exam) {
       (q.options||[]).forEach((opt, oi) => {
         const optLetter = String.fromCharCode(65 + oi);
         const checked = examAnswers[q.id] === optLetter;
-        html += `<input type="radio" name="q_${q.id}" id="q_${q.id}_${optLetter}" value="${optLetter}" ${checked?'checked':''} onchange="examAnswers['${q.id}']='${optLetter}'">
+        html += `<input type="radio" name="q_${q.id}" id="q_${q.id}_${optLetter}" value="${optLetter}" ${checked?'checked':''} onchange="examAnswers['${q.id}']='${optLetter}';updateExamProgress()">
           <label for="q_${q.id}_${optLetter}">${opt}</label>`;
       });
       html += `</div></div>`;
@@ -163,7 +187,7 @@ function renderExamQuestions(exam) {
         </div>
         <div class="q-stem">${q.stem||''}</div>
         <div style="margin-top:8px">
-          <textarea id="subj_answer_${q.id}" style="width:100%;min-height:80px;padding:8px;border:1px solid rgba(255,171,0,.15);border-radius:6px;background:rgba(255,255,255,.03);color:#e8edf5;font-family:inherit;font-size:11px;resize:vertical;outline:none" placeholder="请输入你的分析和回答..." onchange="examAnswers['${q.id}']=this.value" oninput="examAnswers['${q.id}']=this.value"></textarea>
+          <textarea id="subj_answer_${q.id}" style="width:100%;min-height:80px;padding:8px;border:1px solid rgba(255,171,0,.15);border-radius:6px;background:rgba(255,255,255,.03);color:#e8edf5;font-family:inherit;font-size:11px;resize:vertical;outline:none" placeholder="请输入你的分析和回答..." onchange="examAnswers['${q.id}']=this.value;updateExamProgress()" oninput="examAnswers['${q.id}']=this.value;updateExamProgress()"></textarea>
           <div style="font-size:8px;color:rgba(255,255,255,.2);margin-top:3px">💡 请尽量详细阐述你的分析思路和结论</div>
         </div>
       </div>`;
@@ -298,19 +322,16 @@ async function loadExamHistory() {
     if (!profile) return;
     const exams = await api.getExamHistory(profile.id);
     const el = document.getElementById('examHistory');
-    const badge = document.getElementById('examBadge');
     if (!el) return;
     if (exams.length === 0) {
       el.innerHTML = '<div style="color:rgba(255,255,255,.15);text-align:center;padding:8px">暂无记录</div>';
-      if (badge) badge.textContent = '0';
       return;
     }
-    if (badge) badge.textContent = exams.length;
     el.innerHTML = exams.slice(0, 8).map(e =>
-      `<div class="tt-item" style="cursor:pointer" onclick="viewExamReport('${e.id}')">
-        <span class="tt-date">${fmtDate(e.created_at).slice(5,10)}</span>
-        <span class="tt-content">${e.status||'完成'}</span>
-        <span class="tt-badge">${e.scoring?.percentage||'?'}%</span>
+      `<div class="session-item" onclick="viewExamReport('${e.id}')">
+        <span class="s-date">${fmtDate(e.created_at).slice(5,10)}</span>
+        <span class="s-topic">${e.status||'完成'}</span>
+        <span class="s-badge">${e.scoring?.percentage||'?'}%</span>
       </div>`
     ).join('');
   } catch (e) { /* ignore */ }
@@ -319,6 +340,7 @@ async function loadExamHistory() {
 async function viewExamReport(examId) {
   try {
     const exam = await api.getExam(examId);
+    document.getElementById('examProgressArea').style.display = 'none';
     if (exam.status === 'graded') {
       renderExamResult({ scoring: exam.scoring, report: exam.report });
     } else {

@@ -109,8 +109,8 @@ async def chat(request: ChatRequest, db: Session = Depends(get_db)):
         "topic": session.topic or "",
     }
 
-    # 路由判断（模拟）
-    agent_route = _route_question(request.message)
+    # 路由判断（模拟） — 传入上下文以支持追问感知
+    agent_route = _route_question(request.message, context)
 
     # 添加用户消息
     messages.append({
@@ -221,8 +221,30 @@ async def analyze_learning(profile_id: str, db: Session = Depends(get_db)):
     }
 
 
-def _route_question(message: str) -> str:
-    """模拟问题路由"""
+def _route_question(message: str, context: dict = None) -> str:
+    """问题路由 — 支持上下文感知
+
+    根据当前消息和历史上下文中最后的assistant消息，
+    判断用户是在追问还是提出新问题。
+    """
+    # 检查是否在追问（上一条assistant消息引导了后续）
+    if context:
+        recent_msgs = context.get("recent_messages", [])
+        if len(recent_msgs) >= 1:
+            last_assistant = None
+            for m in reversed(recent_msgs):
+                if m.get("role") == "assistant":
+                    last_assistant = m.get("content", "")
+                    break
+            if last_assistant and ("想深入了解" in last_assistant or "想了解哪" in last_assistant or "想详细了解哪" in last_assistant):
+                # 追问场景：按用户提到的主题路由
+                if any(kw in message for kw in ["GMV", "流量", "转化", "客单价", "对比", "归因", "漏斗", "分群"]):
+                    return "知识答疑Agent"
+                if "Prompt" in message or "提示词" in message:
+                    return "知识答疑Agent"
+                return "导学追问Agent"
+
+    # 常规关键词路由
     if "案例" in message or "例子" in message or "场景" in message:
         return "案例讲解Agent"
     if "为什么" in message or "如何" in message or "怎么" in message:

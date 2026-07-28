@@ -40,6 +40,10 @@ function renderLearningPage() {
           <div style="font-size:10px;color:rgba(255,255,255,.15);text-align:center;padding:16px">暂无会话</div>
         </div>
         <button class="btn-secondary" style="width:100%;padding:5px;font-size:10px" onclick="startNewChat()">+ 新会话</button>
+        <div class="radar-section" id="learningRadarSection" style="display:none;margin-top:4px;padding-top:6px;border-top:1px solid rgba(79,195,247,.08)">
+          <div class="panel-title" style="border:none;padding-bottom:3px;font-size:9px">📊 基础能力雷达图</div>
+          <div class="radar-container" style="height:120px"><canvas id="learningRadar" width="120" height="120"></canvas></div>
+        </div>
       </aside>
 
       <main class="middle-panel">
@@ -100,6 +104,7 @@ function renderLearningAgents() {
 
 function highlightLearningAgent(idx) {
   const cards = document.querySelectorAll('#learningAgentFlow .agent-card');
+  if (idx < 0 || cards.length === 0) return;
   cards.forEach(c => c.classList.remove('active','completed'));
   for (let i = 1; i <= idx && i <= cards.length; i++) {
     cards[i-1].classList.remove('active','idle');
@@ -126,20 +131,36 @@ async function loadChatData() {
       return;
     }
 
+    // Load radar
+    loadLearningRadar(profile);
+
     // Load sessions
     const sessions = await api.listSessions(profile.id);
     const listEl = document.getElementById('chatSessionList');
     if (sessions.length > 0) {
       document.getElementById('chatSessionCount').textContent = sessions.length;
       listEl.innerHTML = sessions.map(s =>
-        `<div class="tt-item" style="cursor:pointer" onclick="loadChatSession('${s.id}','${s.topic||''}')">
-          <span class="tt-date">${fmtDate(s.created_at).slice(5,10)||''}</span>
-          <span class="tt-content">${truncate(s.topic||'新会话', 20)}</span>
-          <span class="tt-badge">${s.message_count||0}条</span>
+        `<div class="session-item" onclick="loadChatSession('${s.id}','${s.topic||''}')">
+          <span class="s-date">${fmtDate(s.created_at).slice(5,10)||''}</span>
+          <span class="s-topic">${truncate(s.topic||'新会话', 20)}</span>
+          <span class="s-badge">${s.message_count||0}条</span>
         </div>`
       ).join('');
     }
   } catch (e) { /* ignore */ }
+}
+
+function loadLearningRadar(profile) {
+  const section = document.getElementById('learningRadarSection');
+  if (!section) return;
+  const skills = profile.skills || {};
+  const dims = ['业务理解能力','数据分析能力','AI工具应用能力','经营决策能力','Prompt撰写能力','持续迭代能力'];
+  const values = [
+    skills.business || 50, skills.dataAnalysis || 50, skills.aiApplication || 50,
+    skills.decision || 50, skills.prompt || 50, skills.continuous || 50,
+  ];
+  section.style.display = 'block';
+  setTimeout(() => renderRadar('learningRadar', values, '#4fc3f7', dims), 100);
 }
 
 async function startNewChat() {
@@ -196,13 +217,13 @@ async function sendMessage() {
   const recs = document.getElementById('learningRecommendations');
   if (recs) recs.remove();
 
-  // Add user message
-  area.innerHTML += `<div class="msg user"><div>${escapeHtml(msg)}</div><div class="msg-info">你 · 刚刚</div></div>`;
+  // Add user message (use insertAdjacentHTML to preserve DOM references)
+  area.insertAdjacentHTML('beforeend', `<div class="msg user"><div>${escapeHtml(msg)}</div><div class="msg-info">你 · 刚刚</div></div>`);
   input.value = '';
   area.scrollTop = area.scrollHeight;
 
   // Show loading
-  area.innerHTML += `<div class="msg assistant" id="chatLoadingMsg"><div>🤔 思考中...</div></div>`;
+  area.insertAdjacentHTML('beforeend', `<div class="msg assistant" id="chatLoadingMsg"><div>🤔 思考中...</div></div>`);
   area.scrollTop = area.scrollHeight;
 
   // Highlight routing agent
@@ -227,11 +248,16 @@ async function sendMessage() {
 
     // Add reply
     const replyHtml = marked.parse ? marked.parse(resp.reply) : resp.reply;
-    area.innerHTML += `<div class="msg assistant"><div>${replyHtml}</div><div class="msg-info">${resp.agent_route||'知识答疑Agent'} · 刚刚</div></div>`;
-    // Add "go to practice" button after response
-    area.innerHTML += `<div style="display:flex;justify-content:center;margin:4px 0 8px">
-      <button class="btn-secondary" style="font-size:10px;padding:4px 14px" onclick="navigateTo('practice')">⚡ 去AI陪练实战演练 →</button>
-    </div>`;
+    area.insertAdjacentHTML('beforeend', `<div class="msg assistant"><div>${replyHtml}</div><div class="msg-info">${resp.agent_route||'知识答疑Agent'} · 刚刚</div></div>`);
+
+    // 只保留最后一次对话的"去AI陪练"按钮，移除之前所有的
+    document.querySelectorAll('.practice-jump-btn').forEach(el => el.remove());
+    const btnDiv = document.createElement('div');
+    btnDiv.className = 'practice-jump-btn';
+    btnDiv.style.cssText = 'display:flex;justify-content:center;margin:4px 0 8px';
+    btnDiv.innerHTML = `<button class="btn-secondary" style="font-size:10px;padding:4px 14px" onclick="navigateTo('practice')">⚡ 去AI陪练实战演练 →</button>`;
+    area.appendChild(btnDiv);
+
     area.scrollTop = area.scrollHeight;
 
     // Complete agent flow
@@ -243,7 +269,7 @@ async function sendMessage() {
   } catch (e) {
     const loadingMsg = document.getElementById('chatLoadingMsg');
     if (loadingMsg) loadingMsg.remove();
-    area.innerHTML += `<div class="msg assistant"><div style="color:#ff5252">⚠️ ${e.message}</div></div>`;
+    area.insertAdjacentHTML('beforeend', `<div class="msg assistant"><div style="color:#ff5252">⚠️ ${e.message}</div></div>`);
     highlightLearningAgent(-1);
   }
 }

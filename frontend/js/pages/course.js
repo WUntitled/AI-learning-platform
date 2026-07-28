@@ -6,6 +6,23 @@
  * 右面板: 多Agent协同流程可视化
  */
 
+// 渲染一道选择题
+function renderQuizQuestion(q) {
+  const letters = ['A', 'B', 'C', 'D'];
+  return `
+    <div style="background:rgba(255,255,255,.02);border:1px solid rgba(79,195,247,.08);border-radius:6px;padding:6px 8px">
+      <div style="font-size:10px;color:rgba(255,255,255,.65);margin-bottom:4px;line-height:1.4">${q.question}</div>
+      <div style="display:flex;flex-direction:column;gap:2px">
+        ${q.options.map((opt, oi) => `
+          <label style="display:flex;align-items:center;gap:6px;padding:3px 6px;border-radius:4px;cursor:pointer;transition:all .15s;font-size:9px;color:rgba(255,255,255,.45);background:rgba(255,255,255,.015);border:1px solid transparent" onmouseover="this.style.borderColor='rgba(79,195,247,.2)';this.style.background='rgba(79,195,247,.04)'" onmouseout="if(!this.querySelector('input').checked){this.style.borderColor='transparent';this.style.background='rgba(255,255,255,.015)'}">
+            <input type="radio" name="quiz_${q.id}" value="${oi}" style="accent-color:#4fc3f7" onchange="document.querySelectorAll('label:has(input[name=&quot;quiz_${q.id}&quot;])').forEach(function(l){l.style.background='rgba(255,255,255,.015)';l.style.borderColor='transparent';l.style.color='rgba(255,255,255,.45)'});this.parentElement.style.background='rgba(79,195,247,.08)';this.parentElement.style.borderColor='rgba(79,195,247,.25)';this.parentElement.style.color='#4fc3f7'">
+            <span>${letters[oi]}. ${opt}</span>
+          </label>
+        `).join('')}
+      </div>
+    </div>`;
+}
+
 // Agent定义（与后端同步）
 const COURSE_AGENTS = [
   { idx: 1, cn: '学情诊断 Agent', en: 'Diagnosis Agent', desc: '分析用户输入，判断能力阶段与知识水平',
@@ -23,6 +40,81 @@ const COURSE_AGENTS = [
 ];
 
 let courseGenerated = false;
+
+// ================================================================
+// 基础能力测试题目（共8题，每题4选项）
+// 4个维度：业务理解、数据分析、AI应用、经营决策
+// ================================================================
+const QUIZ_QUESTIONS = [
+  // 业务理解 (dimension: 'business') - Q1~Q2
+  {
+    id: 'q1', dimension: 'business', question: 'GMV下降时，以下哪种分析思路最合理？',
+    options: ['直接降低售价来提升销量', '从流量、转化率、客单价三个维度拆解分析', '更换所有商品品类', '盲目增加广告投放预算'],
+    correct: 1, // 0-indexed
+  },
+  {
+    id: 'q2', dimension: 'business', question: '电商运营中，"漏斗分析"主要用于分析什么？',
+    options: ['商品价格变化趋势', '用户从浏览到购买的转化路径', '竞争对手的营销策略', '库存周转率'],
+    correct: 1,
+  },
+  // 数据分析 (dimension: 'dataAnalysis') - Q3~Q4
+  {
+    id: 'q3', dimension: 'dataAnalysis', question: '同比和环比的区别是什么？',
+    options: ['同比是比去年同期，环比是比上个月/周期', '同比是比上个月，环比是比去年同期', '两者含义相同', '同比是比目标值，环比比实际值'],
+    correct: 0,
+  },
+  {
+    id: 'q4', dimension: 'dataAnalysis', question: '以下哪个指标最能反映用户粘性？',
+    options: ['客单价', '复购率', '转化率', '退款率'],
+    correct: 1,
+  },
+  // AI应用 (dimension: 'aiApplication') - Q5~Q6
+  {
+    id: 'q5', dimension: 'aiApplication', question: '一个好的Prompt（提示词）应包含哪些核心要素？',
+    options: ['角色设定、任务描述、约束条件、输出格式', '只有任务描述', '只有角色设定', '随机关联词组合'],
+    correct: 0,
+  },
+  {
+    id: 'q6', dimension: 'aiApplication', question: '在AI辅助数据分析中，以下哪种做法最有效？',
+    options: ['完全依赖AI给出结论', '结合业务知识，用AI辅助验证假设', '从不使用AI工具', '直接复制AI的回答'],
+    correct: 1,
+  },
+  // 经营决策 (dimension: 'decision') - Q7~Q8
+  {
+    id: 'q7', dimension: 'decision', question: '预算有限时，你会如何分配营销预算？',
+    options: ['全部投放在单一渠道', '根据历史ROI数据，分配到表现最好的渠道组合', '平均分配到所有渠道', '只投放在最便宜的渠道'],
+    correct: 1,
+  },
+  {
+    id: 'q8', dimension: 'decision', question: '某商品A毛利率高但销量低，商品B毛利率低但销量高，最佳策略是？',
+    options: ['只卖商品A', '只卖商品B', '组合销售，用A带动利润、B带动流量', '两个都不卖'],
+    correct: 2,
+  },
+];
+
+// 计算测试得分
+function calculateQuizSkills() {
+  const dims = ['business', 'dataAnalysis', 'aiApplication', 'decision'];
+  const results = { business: 0, dataAnalysis: 0, aiApplication: 0, decision: 0 };
+
+  QUIZ_QUESTIONS.forEach(q => {
+    const selected = document.querySelector(`input[name="quiz_${q.id}"]:checked`);
+    if (selected && parseInt(selected.value) === q.correct) {
+      results[q.dimension] = (results[q.dimension] || 0) + 1;
+    }
+  });
+
+  // 每题正确 +30分，基础分30分
+  const skills = {};
+  dims.forEach(dim => {
+    const correctCount = results[dim] || 0;
+    skills[dim] = 30 + correctCount * 30; // 0→30, 1→60, 2→90
+  });
+  // prompt和continuous保持默认值
+  skills.prompt = 50;
+  skills.continuous = 50;
+  return skills;
+}
 
 function renderCoursePage() {
   const main = document.getElementById('appMain');
@@ -345,13 +437,17 @@ function openCourseProfileModal(isEdit) {
           <input type="text" id="cpGoal" value="${p.learning_goal||''}" placeholder="如：系统掌握AI辅助业务分析方法">
         </div>
         <div class="fg">
-          <div class="fgl">📊 基础能力测试</div>
-          <div class="as">
-            ${['业务理解','数据分析','AI应用','经营决策'].map((name, i) => {
-              const val = (p.skills ? [p.skills.business, p.skills.dataAnalysis, p.skills.aiApplication, p.skills.decision][i] : [70,55,80,45][i]) || [70,55,80,45][i];
-              const colors = ['#4fc3f7','#7c4dff','#00e676','#ffab00'];
-              return `<div class="ar"><span class="arn">${name}</span><div class="art"><div class="arf" style="width:${val}%;background:${colors[i]}"></div><input type="range" min="0" max="100" value="${val}" oninput="this.previousElementSibling.style.width=this.value+'%';this.parentElement.nextElementSibling.textContent=this.value"></div><span class="arv">${val}</span></div>`;
-            }).join('')}
+          <div class="fgl">📊 基础能力测试 <span style="color:rgba(255,255,255,.25);font-weight:400">（共8题，请认真作答）</span></div>
+          <div style="font-size:9px;color:rgba(255,171,0,.5);margin-bottom:6px;padding:4px 8px;background:rgba(255,171,0,.04);border-radius:4px">💡 你的答题情况将作为基础能力评判依据，自动生成能力雷达图</div>
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <div style="font-size:10px;font-weight:600;color:rgba(79,195,247,.5);padding:2px 0">▎业务理解能力</div>
+            ${QUIZ_QUESTIONS.slice(0,2).map(q => renderQuizQuestion(q)).join('')}
+            <div style="font-size:10px;font-weight:600;color:rgba(79,195,247,.5);padding:2px 0;margin-top:4px">▎数据分析能力</div>
+            ${QUIZ_QUESTIONS.slice(2,4).map(q => renderQuizQuestion(q)).join('')}
+            <div style="font-size:10px;font-weight:600;color:rgba(79,195,247,.5);padding:2px 0;margin-top:4px">▎AI工具应用能力</div>
+            ${QUIZ_QUESTIONS.slice(4,6).map(q => renderQuizQuestion(q)).join('')}
+            <div style="font-size:10px;font-weight:600;color:rgba(79,195,247,.5);padding:2px 0;margin-top:4px">▎经营决策能力</div>
+            ${QUIZ_QUESTIONS.slice(6,8).map(q => renderQuizQuestion(q)).join('')}
           </div>
         </div>
       </div>
@@ -380,10 +476,17 @@ async function submitCourseProfile() {
   const btn = document.querySelector('#courseProfileModal .btn-primary');
   btn.disabled = true; btn.textContent = '⏳ 诊断中...';
 
-  const skills = {};
-  const skillNames = ['business','dataAnalysis','aiApplication','decision'];
-  const sliders = document.querySelectorAll('#courseProfileModal .ar .arv');
-  sliders.forEach((el, i) => { if (i < 4) skills[skillNames[i]] = parseInt(el.textContent) || 50; });
+  // 检查是否所有题目都已作答
+  const unanswered = QUIZ_QUESTIONS.filter(q => !document.querySelector(`input[name="quiz_${q.id}"]:checked`));
+  if (unanswered.length > 0) {
+    if (!confirm(`还有 ${unanswered.length} 道题未作答，确定提交吗？`)) {
+      btn.disabled = false; btn.textContent = profileModalEditing ? '💾 保存修改' : '🧬 生成学习画像';
+      return;
+    }
+  }
+
+  // 根据答题情况计算能力值
+  const skills = calculateQuizSkills();
 
   const data = {
     name: document.getElementById('cpName').value.trim() || '学习者',

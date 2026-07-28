@@ -32,7 +32,11 @@ function renderPracticePage() {
             </button>`
           ).join('')}
         </div>
-        <div class="panel-title" style="margin-top:12px">📜 练习历史</div>
+        <div class="radar-section" id="practiceRadarSection" style="display:none;margin-top:8px;padding-top:6px;border-top:1px solid rgba(79,195,247,.08)">
+          <div class="panel-title" style="border:none;padding-bottom:3px;font-size:9px">📊 基础能力雷达图</div>
+          <div class="radar-container" style="height:120px"><canvas id="practiceRadar" width="120" height="120"></canvas></div>
+        </div>
+        <div class="panel-title" style="margin-top:8px">📜 练习历史</div>
         <div id="practiceHistory" style="flex:1;overflow-y:auto;font-size:10px;display:flex;flex-direction:column;gap:3px">
           <div style="color:rgba(255,255,255,.15);text-align:center;padding:12px">暂无记录</div>
         </div>
@@ -62,7 +66,22 @@ function renderPracticePage() {
     el.addEventListener('click', () => openPracticeAgentDrawer(parseInt(el.dataset.idx)));
   });
 
+  loadPracticeRadar();
   loadPracticeHistory();
+}
+
+function loadPracticeRadar() {
+  const section = document.getElementById('practiceRadarSection');
+  if (!section) return;
+  const p = store.profile;
+  if (!p || !p.skills) { section.style.display = 'none'; return; }
+  const dims = ['业务理解能力','数据分析能力','AI工具应用能力','经营决策能力','Prompt撰写能力','持续迭代能力'];
+  const values = [
+    p.skills.business || 50, p.skills.dataAnalysis || 50, p.skills.aiApplication || 50,
+    p.skills.decision || 50, p.skills.prompt || 50, p.skills.continuous || 50,
+  ];
+  section.style.display = 'block';
+  setTimeout(() => renderRadar('practiceRadar', values, '#7c4dff', dims), 100);
 }
 
 function openPracticeAgentDrawer(idx) {
@@ -198,10 +217,10 @@ async function loadPracticeHistory() {
       return;
     }
     el.innerHTML = history.slice(0, 8).map(h =>
-      `<div class="tt-item" style="cursor:pointer" onclick="showPracticeDetail('${h.id}')">
-        <span class="tt-date">${fmtDate(h.created_at).slice(5,10)}</span>
-        <span class="tt-content">${truncate(h.scenario_title||h.scenario_type, 14)}</span>
-        <span class="tt-badge">${h.score||'?'}分</span>
+      `<div class="session-item" onclick="showPracticeDetail('${h.id}')">
+        <span class="s-date">${fmtDate(h.created_at).slice(5,10)}</span>
+        <span class="s-topic">${truncate(h.scenario_title||h.scenario_type, 14)}</span>
+        <span class="s-badge">${h.score||'?'}分</span>
       </div>`
     ).join('');
   } catch (e) { /* ignore */ }
